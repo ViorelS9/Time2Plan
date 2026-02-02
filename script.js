@@ -1,65 +1,59 @@
-let tasks = [];
-
-const dueDateInput = document.getElementById("dueDate");
-const addTaskBtn = document.getElementById("addTaskBtn");
 const taskInput = document.getElementById("taskInput");
+const dateInput = document.getElementById("dateInput");
+const addTaskBtn = document.getElementById("addTaskBtn");
 const taskList = document.getElementById("taskList");
 
-addTaskBtn.addEventListener("click", function () {
-  const taskText = taskInput.value;
-  const dueDateValue = dueDateInput.value;
+let tasks = [];
 
-  tasks.push({
-  text: taskText,
-  dueDate: dueDateValue,
-  priority: priority
-});
+// Calcular prioridad SOLO con fecha
+function calculatePriority(dueDate) {
+  const today = new Date();
+  const due = new Date(dueDate);
+  const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
 
-localStorage.setItem("tasks", JSON.stringify(tasks));
-  
-const today = new Date();
-const dueDate = new Date(dueDateValue);
-
-const diffTime = dueDate - today;
-const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-let priority = "baja";
-
-if (diffDays <= 1) {
-  priority = "alta";
-} else if (diffDays <= 4) {
-  priority = "media";
+  if (diffDays <= 1) return "Alta";
+  if (diffDays <= 3) return "Media";
+  return "Baja";
 }
 
-  if (taskText !== "") {
-    const li = document.createElement("li");
-    li.textContent = taskText + " - vence: " + dueDateValue + " (" + priority + ")";
+// Mostrar tarea en pantalla
+function addTaskToList(text, dueDate, priority) {
+  const li = document.createElement("li");
+  li.textContent = `${text} | 📅 ${dueDate} | 🔥 ${priority}`;
+  taskList.appendChild(li);
+}
 
-    if (priority === "alta") {
-      li.style.color = "red";
-    } else if (priority === "media") {
-      li.style.color = "orange";
-    } else {
-      li.style.color = "green";
-    }
+// Botón agregar tarea
+addTaskBtn.addEventListener("click", () => {
+  const taskText = taskInput.value.trim();
+  const dueDateValue = dateInput.value;
 
-    li.addEventListener("click", function () {
-      li.style.textDecoration = "line-through";
-    });
+  if (taskText === "" || dueDateValue === "") return;
 
-    taskList.appendChild(li);
-    taskInput.value = "";
-  }
+  const priority = calculatePriority(dueDateValue);
+
+  const task = {
+    text: taskText,
+    dueDate: dueDateValue,
+    priority: priority
+  };
+
+  tasks.push(task);
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+
+  addTaskToList(task.text, task.dueDate, task.priority);
+
+  taskInput.value = "";
+  dateInput.value = "";
 });
 
-window.onload = function () {
+// Cargar tareas guardadas
+window.onload = () => {
   const savedTasks = localStorage.getItem("tasks");
-
   if (savedTasks) {
     tasks = JSON.parse(savedTasks);
-
-    tasks.forEach(task => {
-      addTaskToList(task.text, task.dueDate, task.priority);
-    });
+    tasks.forEach(task =>
+      addTaskToList(task.text, task.dueDate, task.priority)
+    );
   }
 };
