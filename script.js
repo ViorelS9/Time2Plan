@@ -5,30 +5,41 @@ const taskList = document.getElementById("taskList");
 
 let tasks = [];
 
-// Calcular prioridad SOLO con fecha
+// Calcular prioridad según la fecha
 function calculatePriority(dueDate) {
   const today = new Date();
   const due = new Date(dueDate);
   const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
 
-  if (diffDays <= 1) return "Alta";
-  if (diffDays <= 3) return "Media";
-  return "Baja";
+  if (diffDays <= 1) {
+    return "Alta";
+  } else if (diffDays <= 4) {
+    return "Media";
+  } else {
+    return "Baja";
+  }
 }
 
 // Mostrar tarea en pantalla
 function addTaskToList(text, dueDate, priority) {
   const li = document.createElement("li");
-  li.textContent = `${text} | 📅 ${dueDate} | 🔥 ${priority}`;
+  li.textContent = text + " | Fecha: " + dueDate + " | Prioridad: " + priority;
+
+  li.addEventListener("click", function () {
+    li.style.textDecoration = "line-through";
+  });
+
   taskList.appendChild(li);
 }
 
 // Botón agregar tarea
-addTaskBtn.addEventListener("click", () => {
+addTaskBtn.addEventListener("click", function () {
   const taskText = taskInput.value.trim();
   const dueDateValue = dateInput.value;
 
-  if (taskText === "" || dueDateValue === "") return;
+  if (taskText === "" || dueDateValue === "") {
+    return;
+  }
 
   const priority = calculatePriority(dueDateValue);
 
@@ -48,12 +59,13 @@ addTaskBtn.addEventListener("click", () => {
 });
 
 // Cargar tareas guardadas
-window.onload = () => {
+window.onload = function () {
   const savedTasks = localStorage.getItem("tasks");
+
   if (savedTasks) {
     tasks = JSON.parse(savedTasks);
-    tasks.forEach(task =>
-      addTaskToList(task.text, task.dueDate, task.priority)
-    );
+    tasks.forEach(function (task) {
+      addTaskToList(task.text, task.dueDate, task.priority);
+    });
   }
 };
