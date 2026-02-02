@@ -98,3 +98,36 @@ window.onload = () => {
     renderTasks();
   }
 };
+
+//Asistente Horarios
+function showAssistantSuggestion() {
+  if (tasks.length === 0) {
+    alert("No hay tareas registradas.");
+    return;
+  }
+
+  const pendingTasks = tasks
+    .filter(task => !task.completed)
+    .sort((a, b) => {
+      const priorities = {
+        "Muy Alta": 4,
+        "Alta": 3,
+        "Media": 2,
+        "Baja": 1
+      };
+      return priorities[b.priority] - priorities[a.priority];
+    });
+
+  let message = "Sugerencia del asistente:\n\n";
+  pendingTasks.slice(0, 3).forEach((task, index) => {
+    message +=
+      (index + 1) +
+      ". " +
+      task.text +
+      " (Prioridad: " +
+      task.priority +
+      ")\n";
+  });
+
+  alert(message);
+}
