@@ -109,16 +109,17 @@ function showAssistantSuggestion() {
   const pendingTasks = tasks
     .filter(task => !task.completed)
     .sort((a, b) => {
-      const priorities = {
+      const priorityValue = {
         "Muy Alta": 4,
         "Alta": 3,
         "Media": 2,
         "Baja": 1
       };
-      return priorities[b.priority] - priorities[a.priority];
+      return priorityValue[b.priority] - priorityValue[a.priority];
     });
 
   let message = "Sugerencia del asistente:\n\n";
+
   pendingTasks.slice(0, 3).forEach((task, index) => {
     message +=
       (index + 1) +
