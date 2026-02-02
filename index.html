@@ -1,9 +1,26 @@
-<input type="text" id="taskInput" placeholder="Escribe una tarea"
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Time2Plan</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-<select id="priority">
-  <option value="alta">Alta</option>
-  <option value="media">Media</option>
-  <option value="baja">Baja</option>
-</select>
+  <h1>Time2Plan</h1>
 
-<button id="addTaskBtn">Agregar tarea</button>
+  <input type="text" id="taskInput" placeholder="Escribe una tarea">
+
+  <select id="priority">
+    <option value="alta">Alta</option>
+    <option value="media">Media</option>
+    <option value="baja">Baja</option>
+  </select>
+
+  <button id="addTaskBtn">Agregar tarea</button>
+
+  <ul id="taskList"></ul>
+
+  <script src="script.js"></script>
+</body>
+</html>
