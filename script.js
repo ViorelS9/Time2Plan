@@ -11,8 +11,9 @@ function calculatePriority(dueDate) {
   const due = new Date(dueDate);
   const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
 
-  if (diffDays <= 1) return "Alta";
-  if (diffDays <= 4) return "Media";
+  if (diffDays <= 0) return "Muy Alta";
+  if (diffDays <= 2) return "Alta";
+  if (diffDays <= 5) return "Media";
   return "Baja";
 }
 
@@ -34,6 +35,8 @@ function renderTasks() {
       task.dueDate +
       " | Prioridad: " +
       task.priority;
+
+    task.priority = calculatePriority(task.dueDate);
 
     if (task.completed) {
       li.style.textDecoration = "line-through";
