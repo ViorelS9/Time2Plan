@@ -1,7 +1,6 @@
 const dueDateInput = document.getElementById("dueDate");
 const addTaskBtn = document.getElementById("addTaskBtn");
 const taskInput = document.getElementById("taskInput");
-const prioritySelect = document.getElementById("priority");
 const taskList = document.getElementById("taskList");
 
 addTaskBtn.addEventListener("click", function () {
