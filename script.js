@@ -5,67 +5,93 @@ const taskList = document.getElementById("taskList");
 
 let tasks = [];
 
-// Calcular prioridad según la fecha
+// Calcular prioridad según fecha
 function calculatePriority(dueDate) {
   const today = new Date();
   const due = new Date(dueDate);
   const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
 
-  if (diffDays <= 1) {
-    return "Alta";
-  } else if (diffDays <= 4) {
-    return "Media";
-  } else {
-    return "Baja";
-  }
+  if (diffDays <= 1) return "Alta";
+  if (diffDays <= 4) return "Media";
+  return "Baja";
 }
 
-// Mostrar tarea en pantalla
-function addTaskToList(text, dueDate, priority) {
-  const li = document.createElement("li");
-  li.textContent = text + " | Fecha: " + dueDate + " | Prioridad: " + priority;
+// Guardar en localStorage
+function saveTasks() {
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+}
 
-  li.addEventListener("click", function () {
-    li.style.textDecoration = "line-through";
+// Mostrar tareas
+function renderTasks() {
+  taskList.innerHTML = "";
+
+  tasks.forEach((task, index) => {
+    const li = document.createElement("li");
+
+    li.textContent =
+      task.text +
+      " | Fecha: " +
+      task.dueDate +
+      " | Prioridad: " +
+      task.priority;
+
+    if (task.completed) {
+      li.style.textDecoration = "line-through";
+    }
+
+    // Botón completar
+    const completeBtn = document.createElement("button");
+    completeBtn.textContent = "Completar";
+    completeBtn.onclick = () => {
+      tasks[index].completed = true;
+      saveTasks();
+      renderTasks();
+    };
+
+    // Botón eliminar
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "Eliminar";
+    deleteBtn.onclick = () => {
+      tasks.splice(index, 1);
+      saveTasks();
+      renderTasks();
+    };
+
+    li.appendChild(document.createElement("br"));
+    li.appendChild(completeBtn);
+    li.appendChild(deleteBtn);
+
+    taskList.appendChild(li);
   });
-
-  taskList.appendChild(li);
 }
 
-// Botón agregar tarea
-addTaskBtn.addEventListener("click", function () {
+// Agregar tarea
+addTaskBtn.addEventListener("click", () => {
   const taskText = taskInput.value.trim();
   const dueDateValue = dateInput.value;
 
-  if (taskText === "" || dueDateValue === "") {
-    return;
-  }
-
-  const priority = calculatePriority(dueDateValue);
+  if (taskText === "" || dueDateValue === "") return;
 
   const task = {
     text: taskText,
     dueDate: dueDateValue,
-    priority: priority
+    priority: calculatePriority(dueDateValue),
+    completed: false
   };
 
   tasks.push(task);
-  localStorage.setItem("tasks", JSON.stringify(tasks));
-
-  addTaskToList(task.text, task.dueDate, task.priority);
+  saveTasks();
+  renderTasks();
 
   taskInput.value = "";
   dateInput.value = "";
 });
 
-// Cargar tareas guardadas
-window.onload = function () {
+// Cargar tareas al iniciar
+window.onload = () => {
   const savedTasks = localStorage.getItem("tasks");
-
   if (savedTasks) {
     tasks = JSON.parse(savedTasks);
-    tasks.forEach(function (task) {
-      addTaskToList(task.text, task.dueDate, task.priority);
-    });
+    renderTasks();
   }
 };
