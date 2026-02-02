@@ -1,3 +1,5 @@
+let tasks = [];
+
 const dueDateInput = document.getElementById("dueDate");
 const addTaskBtn = document.getElementById("addTaskBtn");
 const taskInput = document.getElementById("taskInput");
@@ -6,6 +8,15 @@ const taskList = document.getElementById("taskList");
 addTaskBtn.addEventListener("click", function () {
   const taskText = taskInput.value;
   const dueDateValue = dueDateInput.value;
+
+  tasks.push({
+  text: taskText,
+  dueDate: dueDateValue,
+  priority: priority
+});
+
+localStorage.setItem("tasks", JSON.stringify(tasks));
+  
 const today = new Date();
 const dueDate = new Date(dueDateValue);
 
@@ -40,3 +51,15 @@ if (diffDays <= 1) {
     taskInput.value = "";
   }
 });
+
+window.onload = function () {
+  const savedTasks = localStorage.getItem("tasks");
+
+  if (savedTasks) {
+    tasks = JSON.parse(savedTasks);
+
+    tasks.forEach(task => {
+      addTaskToList(task.text, task.dueDate, task.priority);
+    });
+  }
+};
