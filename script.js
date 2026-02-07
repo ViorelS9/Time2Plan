@@ -4,9 +4,15 @@ const dateInput = document.getElementById("dateInput");
 const addTaskBtn = document.getElementById("addTaskBtn");
 const taskList = document.getElementById("taskList");
 
+const assistantBtn = document.getElementById("assistantBtn");
+const assistantOutput = document.getElementById("assistantOutput");
+const notificationArea = document.getElementById("notificationArea");
+
 let tasks = [];
 
-// Calcular prioridad dinámica según fecha
+
+/* ---------------- PRIORIDAD POR FECHA ---------------- */
+
 function calculatePriority(dueDate) {
   const today = new Date();
   const due = new Date(dueDate);
@@ -18,19 +24,54 @@ function calculatePriority(dueDate) {
   return "Baja";
 }
 
-// Guardar tareas
+
+/* ---------------- GUARDAR / CARGAR ---------------- */
+
 function saveTasks() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
 }
 
-// Renderizar tareas
+function loadTasks() {
+  const saved = localStorage.getItem("tasks");
+  if (saved) tasks = JSON.parse(saved);
+}
+
+
+/* ---------------- NOTIFICACIONES INTERNAS ---------------- */
+
+function checkNotifications() {
+  notificationArea.innerHTML = "";
+
+  tasks.forEach(task => {
+    if (task.completed) return;
+
+    const priority = calculatePriority(task.dueDate);
+
+    if (priority === "Muy Alta" || priority === "Alta") {
+      const note = document.createElement("div");
+      note.textContent =
+        "Aviso: La tarea '" +
+        task.text +
+        "' ahora es prioridad " +
+        priority;
+
+      notificationArea.appendChild(note);
+    }
+  });
+}
+
+
+/* ---------------- RENDERIZAR TAREAS ---------------- */
+
 function renderTasks() {
   taskList.innerHTML = "";
 
   tasks.forEach((task, index) => {
+
     task.priority = calculatePriority(task.dueDate);
 
     const li = document.createElement("li");
+
     const details = document.createElement("details");
     const summary = document.createElement("summary");
 
@@ -41,17 +82,16 @@ function renderTasks() {
       " | Prioridad: " +
       task.priority;
 
+    if (task.completed) {
+      summary.style.textDecoration = "line-through";
+    }
+
     details.appendChild(summary);
 
     const description = document.createElement("p");
     description.textContent = task.description || "Sin descripción";
     details.appendChild(description);
 
-    if (task.completed) {
-      summary.style.textDecoration = "line-through";
-    }
-
-    // Botón completar
     const completeBtn = document.createElement("button");
     completeBtn.textContent = "Completar";
     completeBtn.onclick = () => {
@@ -60,7 +100,6 @@ function renderTasks() {
       renderTasks();
     };
 
-    // Botón eliminar
     const deleteBtn = document.createElement("button");
     deleteBtn.textContent = "Eliminar";
     deleteBtn.onclick = () => {
@@ -69,31 +108,37 @@ function renderTasks() {
       renderTasks();
     };
 
-    details.appendChild(completeBtn);
-    details.appendChild(deleteBtn);
-
     li.appendChild(details);
+    li.appendChild(completeBtn);
+    li.appendChild(deleteBtn);
+
     taskList.appendChild(li);
   });
+
+  checkNotifications();
 }
 
-// Agregar tarea
-addTaskBtn.addEventListener("click", () => {
-  const taskText = taskInput.value.trim();
-  const descriptionText = descriptionInput.value.trim();
-  const dueDateValue = dateInput.value;
 
-  if (taskText === "" || dueDateValue === "") return;
+/* ---------------- AGREGAR TAREA ---------------- */
+
+addTaskBtn.addEventListener("click", () => {
+
+  const text = taskInput.value.trim();
+  const desc = descriptionInput.value.trim();
+  const date = dateInput.value;
+
+  if (!text || !date) return;
 
   const task = {
-    text: taskText,
-    description: descriptionText,
-    dueDate: dueDateValue,
-    priority: calculatePriority(dueDateValue),
+    text: text,
+    description: desc,
+    dueDate: date,
+    priority: calculatePriority(date),
     completed: false
   };
 
   tasks.push(task);
+
   saveTasks();
   renderTasks();
 
@@ -102,46 +147,80 @@ addTaskBtn.addEventListener("click", () => {
   dateInput.value = "";
 });
 
-// Cargar tareas
-window.onload = () => {
-  const savedTasks = localStorage.getItem("tasks");
-  if (savedTasks) {
-    tasks = JSON.parse(savedTasks);
-    renderTasks();
-  }
-};
 
-// Asistente de prioridades
-function showAssistantSuggestion() {
-  const pendingTasks = tasks.filter(task => !task.completed);
+/* ---------------- ASISTENTE HORARIO SEMANAL ---------------- */
 
-  if (pendingTasks.length === 0) {
-    alert("No hay tareas pendientes.");
-    return;
-  }
+function generateWeeklySchedule() {
 
-  const priorityValue = {
-    "Muy Alta": 4,
-    "Alta": 3,
-    "Media": 2,
-    "Baja": 1
-  };
+  const days = [
+    "Lunes",
+    "Martes",
+    "Miércoles",
+    "Jueves",
+    "Viernes",
+    "Sábado",
+    "Domingo"
+  ];
 
-  pendingTasks.sort(
-    (a, b) => priorityValue[b.priority] - priorityValue[a.priority]
-  );
+  const pending = tasks
+    .filter(t => !t.completed)
+    .sort((a, b) => {
+      return new Date(a.dueDate) - new Date(b.dueDate);
+    });
 
-  let message = "Plan recomendado:\n\n";
+  let schedule = {};
 
-  pendingTasks.slice(0, 3).forEach((task, index) => {
-    message +=
-      (index + 1) +
-      ". " +
-      task.text +
-      " (" +
-      task.priority +
-      ")\n";
+  days.forEach(day => {
+    schedule[day] = [];
   });
 
-  alert(message);
+  pending.forEach((task, i) => {
+    const day = days[i % 7];
+    schedule[day].push(task.text);
+  });
+
+  return schedule;
 }
+
+
+/* ---------------- MOSTRAR HORARIO ---------------- */
+
+assistantBtn.addEventListener("click", () => {
+
+  const schedule = generateWeeklySchedule();
+
+  assistantOutput.innerHTML = "<h3>Horario sugerido</h3>";
+
+  for (let day in schedule) {
+
+    const dayDiv = document.createElement("div");
+
+    const title = document.createElement("strong");
+    title.textContent = day;
+
+    dayDiv.appendChild(title);
+
+    if (schedule[day].length === 0) {
+      const empty = document.createElement("p");
+      empty.textContent = "Sin tareas";
+      dayDiv.appendChild(empty);
+    } else {
+      schedule[day].forEach(task => {
+        const p = document.createElement("p");
+        p.textContent = task;
+        dayDiv.appendChild(p);
+      });
+    }
+
+    assistantOutput.appendChild(dayDiv);
+  }
+
+});
+
+
+/* ---------------- INICIO ---------------- */
+
+window.onload = () => {
+  loadTasks();
+  renderTasks();
+};
