@@ -9,14 +9,15 @@
 
   <h1>Time2Plan</h1>
 
-  <input type="text" id="taskInput" placeholder="Escribe una tarea">
+  <input type="text" id="taskInput" placeholder="Título de la tarea">
+
+  <textarea id="descriptionInput" placeholder="Descripción de la tarea"></textarea>
 
   <input type="date" id="dateInput">
 
   <button id="addTaskBtn">Agregar tarea</button>
-  <button onclick="showAssistantSuggestion()">
-    Sugerencia del asistente
-  </button>
+
+  <button onclick="showAssistantSuggestion()">Sugerencia del asistente</button>
 
   <ul id="taskList"></ul>
 
