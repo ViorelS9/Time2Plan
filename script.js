@@ -217,6 +217,80 @@ assistantBtn.addEventListener("click", () => {
 
 });
 
+function generateWeeklySchedule() {
+  const preferences = prompt(
+    "¿Algo a tomar en cuenta?\nEj: martes ocupado, jueves pocas horas, finde libre"
+  );
+
+  let reducedDays = [];
+
+  if (preferences) {
+    weekDays.forEach(day => {
+      if (preferences.toLowerCase().includes(day.toLowerCase())) {
+        reducedDays.push(day);
+      }
+    });
+  }
+
+  const pendingTasks = tasks
+    .filter(task => !task.completed)
+    .sort((a, b) => {
+      const values = {
+        "Muy Alta": 4,
+        "Alta": 3,
+        "Media": 2,
+        "Baja": 1
+      };
+      return values[b.priority] - values[a.priority];
+    });
+
+  let schedule = {};
+  weekDays.forEach(day => (schedule[day] = []));
+
+  let dayIndex = 0;
+
+  pendingTasks.forEach(task => {
+    let attempts = 0;
+
+    while (
+      reducedDays.includes(weekDays[dayIndex]) &&
+      attempts < weekDays.length
+    ) {
+      dayIndex = (dayIndex + 1) % weekDays.length;
+      attempts++;
+    }
+
+    schedule[weekDays[dayIndex]].push(task.text);
+    task.assignedDay = weekDays[dayIndex];
+    dayIndex = (dayIndex + 1) % weekDays.length;
+  });
+
+  renderSchedule(schedule);
+}
+
+function renderSchedule(schedule) {
+  const scheduleDiv = document.getElementById("schedule");
+  scheduleDiv.innerHTML = "<h3>Horario semanal</h3>";
+
+  weekDays.forEach(day => {
+    const dayBlock = document.createElement("div");
+    dayBlock.innerHTML = "<strong>" + day + "</strong>";
+
+    if (schedule[day].length === 0) {
+      dayBlock.innerHTML += "<p>Sin tareas</p>";
+    } else {
+      const ul = document.createElement("ul");
+      schedule[day].forEach(task => {
+        const li = document.createElement("li");
+        li.textContent = task;
+        ul.appendChild(li);
+      });
+      dayBlock.appendChild(ul);
+    }
+
+    scheduleDiv.appendChild(dayBlock);
+  });
+}
 
 /* ---------------- INICIO ---------------- */
 
