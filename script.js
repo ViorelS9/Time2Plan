@@ -1,11 +1,12 @@
 const taskInput = document.getElementById("taskInput");
+const descriptionInput = document.getElementById("descriptionInput");
 const dateInput = document.getElementById("dateInput");
 const addTaskBtn = document.getElementById("addTaskBtn");
 const taskList = document.getElementById("taskList");
 
 let tasks = [];
 
-// Calcular prioridad según fecha
+// Calcular prioridad dinámica según fecha
 function calculatePriority(dueDate) {
   const today = new Date();
   const due = new Date(dueDate);
@@ -17,29 +18,37 @@ function calculatePriority(dueDate) {
   return "Baja";
 }
 
-// Guardar en localStorage
+// Guardar tareas
 function saveTasks() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
 }
 
-// Mostrar tareas
+// Renderizar tareas
 function renderTasks() {
   taskList.innerHTML = "";
 
   tasks.forEach((task, index) => {
-    const li = document.createElement("li");
+    task.priority = calculatePriority(task.dueDate);
 
-    li.textContent =
+    const li = document.createElement("li");
+    const details = document.createElement("details");
+    const summary = document.createElement("summary");
+
+    summary.textContent =
       task.text +
       " | Fecha: " +
       task.dueDate +
       " | Prioridad: " +
       task.priority;
 
-    task.priority = calculatePriority(task.dueDate);
+    details.appendChild(summary);
+
+    const description = document.createElement("p");
+    description.textContent = task.description || "Sin descripción";
+    details.appendChild(description);
 
     if (task.completed) {
-      li.style.textDecoration = "line-through";
+      summary.style.textDecoration = "line-through";
     }
 
     // Botón completar
@@ -60,10 +69,10 @@ function renderTasks() {
       renderTasks();
     };
 
-    li.appendChild(document.createElement("br"));
-    li.appendChild(completeBtn);
-    li.appendChild(deleteBtn);
+    details.appendChild(completeBtn);
+    details.appendChild(deleteBtn);
 
+    li.appendChild(details);
     taskList.appendChild(li);
   });
 }
@@ -71,12 +80,14 @@ function renderTasks() {
 // Agregar tarea
 addTaskBtn.addEventListener("click", () => {
   const taskText = taskInput.value.trim();
+  const descriptionText = descriptionInput.value.trim();
   const dueDateValue = dateInput.value;
 
   if (taskText === "" || dueDateValue === "") return;
 
   const task = {
     text: taskText,
+    description: descriptionText,
     dueDate: dueDateValue,
     priority: calculatePriority(dueDateValue),
     completed: false
@@ -87,10 +98,11 @@ addTaskBtn.addEventListener("click", () => {
   renderTasks();
 
   taskInput.value = "";
+  descriptionInput.value = "";
   dateInput.value = "";
 });
 
-// Cargar tareas al iniciar
+// Cargar tareas
 window.onload = () => {
   const savedTasks = localStorage.getItem("tasks");
   if (savedTasks) {
@@ -99,33 +111,34 @@ window.onload = () => {
   }
 };
 
-//Asistente Horarios
+// Asistente de prioridades
 function showAssistantSuggestion() {
-  if (tasks.length === 0) {
-    alert("No hay tareas registradas.");
+  const pendingTasks = tasks.filter(task => !task.completed);
+
+  if (pendingTasks.length === 0) {
+    alert("No hay tareas pendientes.");
     return;
   }
 
-  const pendingTasks = tasks
-    .filter(task => !task.completed)
-    .sort((a, b) => {
-      const priorityValue = {
-        "Muy Alta": 4,
-        "Alta": 3,
-        "Media": 2,
-        "Baja": 1
-      };
-      return priorityValue[b.priority] - priorityValue[a.priority];
-    });
+  const priorityValue = {
+    "Muy Alta": 4,
+    "Alta": 3,
+    "Media": 2,
+    "Baja": 1
+  };
 
-  let message = "Sugerencia del asistente:\n\n";
+  pendingTasks.sort(
+    (a, b) => priorityValue[b.priority] - priorityValue[a.priority]
+  );
+
+  let message = "Plan recomendado:\n\n";
 
   pendingTasks.slice(0, 3).forEach((task, index) => {
     message +=
       (index + 1) +
       ". " +
       task.text +
-      " (Prioridad: " +
+      " (" +
       task.priority +
       ")\n";
   });
