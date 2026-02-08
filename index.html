@@ -2,35 +2,81 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Time2Plan</title>
+  <title>Planificador Inteligente</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    input, select, button, textarea {
+      margin: 5px 0;
+      display: block;
+    }
+
+    li {
+      margin-bottom: 10px;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 5px;
+    }
+
+    .completed {
+      text-decoration: line-through;
+      color: gray;
+    }
+
+    .description {
+      display: none;
+      margin-top: 5px;
+      font-size: 0.9em;
+    }
+
+    .task-title {
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    #schedule div {
+      border: 1px solid #ccc;
+      padding: 5px;
+      margin: 5px 0;
+    }
+  </style>
 </head>
 <body>
 
-  <h1>Time2Plan</h1>
+<h2>Gestor de tareas</h2>
 
-  <input type="text" id="taskInput" placeholder="Título de la tarea">
+<input id="taskInput" placeholder="Título de la tarea">
+<textarea id="descriptionInput" placeholder="Descripción de la tarea"></textarea>
 
-  <textarea id="descriptionInput" placeholder="Descripción de la tarea"></textarea>
+<label>Fecha de entrega</label>
+<input type="date" id="dateInput">
 
-  <input type="date" id="dateInput">
+<label>Complejidad percibida</label>
+<select id="complexityInput">
+  <option value="Baja">Baja</option>
+  <option value="Media">Media</option>
+  <option value="Alta">Alta</option>
+</select>
 
-  <button id="addTaskBtn">Agregar tarea</button>
+<label>Tipo de tarea</label>
+<select id="typeInput">
+  <option value="Escolar">Escolar</option>
+  <option value="Personal">Personal</option>
+</select>
 
-  <button id="assistantBtn">Generar horario</button>
+<button id="addTaskBtn">Agregar tarea</button>
 
-  <div id="assistantOutput"></div>
+<ul id="taskList"></ul>
 
-  <div id="notificationArea"></div>
+<hr>
 
-  <ul id="taskList"></ul>
+<button onclick="generateWeeklySchedule()">Generar horario semanal</button>
+<div id="schedule"></div>
 
-  <button onclick="generateWeeklySchedule()">
-    Generar horario semanal
-  </button>
-
-  <div id="schedule"></div>
-
-  <script src="script.js"></script>
+<!-- IMPORTANTE: cargar JS al final -->
+<script src="script.js"></script>
 </body>
 </html>
