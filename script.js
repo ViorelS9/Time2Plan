@@ -1,101 +1,83 @@
 const taskInput = document.getElementById("taskInput");
 const descriptionInput = document.getElementById("descriptionInput");
 const dateInput = document.getElementById("dateInput");
+const complexityInput = document.getElementById("complexityInput");
+const typeInput = document.getElementById("typeInput");
 const addTaskBtn = document.getElementById("addTaskBtn");
 const taskList = document.getElementById("taskList");
 
-const assistantBtn = document.getElementById("assistantBtn");
-const assistantOutput = document.getElementById("assistantOutput");
-const notificationArea = document.getElementById("notificationArea");
+const weekDays = [
+  "Lunes",
+  "Martes",
+  "Miércoles",
+  "Jueves",
+  "Viernes",
+  "Sábado",
+  "Domingo"
+];
 
-let tasks = [];
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
-
-/* ---------------- PRIORIDAD POR FECHA ---------------- */
-
-function calculatePriority(dueDate) {
+// ---------------- PRIORIDAD ----------------
+function calculatePriority(task) {
   const today = new Date();
-  const due = new Date(dueDate);
+  const due = new Date(task.dueDate);
   const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
 
-  if (diffDays <= 0) return "Muy Alta";
-  if (diffDays <= 2) return "Alta";
-  if (diffDays <= 5) return "Media";
+  let score = 0;
+
+  if (diffDays <= 1) score += 4;
+  else if (diffDays <= 3) score += 3;
+  else if (diffDays <= 6) score += 2;
+  else score += 1;
+
+  if (task.complexity === "Alta") score += 2;
+  if (task.complexity === "Media") score += 1;
+  if (task.type === "Escolar") score += 2;
+
+  if (score >= 7) return "Muy Alta";
+  if (score >= 5) return "Alta";
+  if (score >= 3) return "Media";
   return "Baja";
 }
 
-
-/* ---------------- GUARDAR / CARGAR ---------------- */
-
+// ---------------- GUARDAR ----------------
 function saveTasks() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
 }
 
-function loadTasks() {
-  const saved = localStorage.getItem("tasks");
-  if (saved) tasks = JSON.parse(saved);
-}
-
-
-/* ---------------- NOTIFICACIONES INTERNAS ---------------- */
-
-function checkNotifications() {
-  notificationArea.innerHTML = "";
-
-  tasks.forEach(task => {
-    if (task.completed) return;
-
-    const priority = calculatePriority(task.dueDate);
-
-    if (priority === "Muy Alta" || priority === "Alta") {
-      const note = document.createElement("div");
-      note.textContent =
-        "Aviso: La tarea '" +
-        task.text +
-        "' ahora es prioridad " +
-        priority;
-
-      notificationArea.appendChild(note);
-    }
-  });
-}
-
-
-/* ---------------- RENDERIZAR TAREAS ---------------- */
-
+// ---------------- RENDER TAREAS ----------------
 function renderTasks() {
   taskList.innerHTML = "";
 
   tasks.forEach((task, index) => {
+    task.priority = calculatePriority(task);
 
-    task.priority = calculatePriority(task.dueDate);
+    if (task.priority === "Muy Alta" && !task.notified) {
+      alert("La tarea '" + task.text + "' es muy prioritaria.");
+      task.notified = true;
+      saveTasks();
+    }
 
     const li = document.createElement("li");
 
-    const details = document.createElement("details");
-    const summary = document.createElement("summary");
+    const title = document.createElement("div");
+    title.textContent = task.text + " | Prioridad: " + task.priority;
+    title.className = "task-title";
+    if (task.completed) title.classList.add("completed");
 
-    summary.textContent =
-      task.text +
-      " | Fecha: " +
-      task.dueDate +
-      " | Prioridad: " +
-      task.priority;
+    const desc = document.createElement("div");
+    desc.textContent = task.description;
+    desc.className = "description";
 
-    if (task.completed) {
-      summary.style.textDecoration = "line-through";
-    }
-
-    details.appendChild(summary);
-
-    const description = document.createElement("p");
-    description.textContent = task.description || "Sin descripción";
-    details.appendChild(description);
+    title.onclick = () => {
+      desc.style.display = desc.style.display === "none" ? "block" : "none";
+    };
 
     const completeBtn = document.createElement("button");
     completeBtn.textContent = "Completar";
     completeBtn.onclick = () => {
-      tasks[index].completed = true;
+      task.completed = true;
       saveTasks();
       renderTasks();
     };
@@ -108,36 +90,28 @@ function renderTasks() {
       renderTasks();
     };
 
-    li.appendChild(details);
+    li.appendChild(title);
+    li.appendChild(desc);
     li.appendChild(completeBtn);
     li.appendChild(deleteBtn);
 
     taskList.appendChild(li);
   });
-
-  checkNotifications();
 }
 
+// ---------------- AGREGAR TAREA ----------------
+addTaskBtn.onclick = () => {
+  if (!taskInput.value || !dateInput.value) return;
 
-/* ---------------- AGREGAR TAREA ---------------- */
-
-addTaskBtn.addEventListener("click", () => {
-
-  const text = taskInput.value.trim();
-  const desc = descriptionInput.value.trim();
-  const date = dateInput.value;
-
-  if (!text || !date) return;
-
-  const task = {
-    text: text,
-    description: desc,
-    dueDate: date,
-    priority: calculatePriority(date),
-    completed: false
-  };
-
-  tasks.push(task);
+  tasks.push({
+    text: taskInput.value,
+    description: descriptionInput.value,
+    dueDate: dateInput.value,
+    complexity: complexityInput.value,
+    type: typeInput.value,
+    completed: false,
+    notified: false
+  });
 
   saveTasks();
   renderTasks();
@@ -145,81 +119,12 @@ addTaskBtn.addEventListener("click", () => {
   taskInput.value = "";
   descriptionInput.value = "";
   dateInput.value = "";
-});
+};
 
-
-/* ---------------- ASISTENTE HORARIO SEMANAL ---------------- */
-
-function generateWeeklySchedule() {
-
-  const days = [
-    "Lunes",
-    "Martes",
-    "Miércoles",
-    "Jueves",
-    "Viernes",
-    "Sábado",
-    "Domingo"
-  ];
-
-  const pending = tasks
-    .filter(t => !t.completed)
-    .sort((a, b) => {
-      return new Date(a.dueDate) - new Date(b.dueDate);
-    });
-
-  let schedule = {};
-
-  days.forEach(day => {
-    schedule[day] = [];
-  });
-
-  pending.forEach((task, i) => {
-    const day = days[i % 7];
-    schedule[day].push(task.text);
-  });
-
-  return schedule;
-}
-
-
-/* ---------------- MOSTRAR HORARIO ---------------- */
-
-assistantBtn.addEventListener("click", () => {
-
-  const schedule = generateWeeklySchedule();
-
-  assistantOutput.innerHTML = "<h3>Horario sugerido</h3>";
-
-  for (let day in schedule) {
-
-    const dayDiv = document.createElement("div");
-
-    const title = document.createElement("strong");
-    title.textContent = day;
-
-    dayDiv.appendChild(title);
-
-    if (schedule[day].length === 0) {
-      const empty = document.createElement("p");
-      empty.textContent = "Sin tareas";
-      dayDiv.appendChild(empty);
-    } else {
-      schedule[day].forEach(task => {
-        const p = document.createElement("p");
-        p.textContent = task;
-        dayDiv.appendChild(p);
-      });
-    }
-
-    assistantOutput.appendChild(dayDiv);
-  }
-
-});
-
+// ---------------- HORARIO SEMANAL ----------------
 function generateWeeklySchedule() {
   const preferences = prompt(
-    "¿Algo a tomar en cuenta?\nEj: martes ocupado, jueves pocas horas, finde libre"
+    "¿Algo a tomar en cuenta?\nEj: martes ocupado, jueves pocas horas"
   );
 
   let reducedDays = [];
@@ -233,68 +138,53 @@ function generateWeeklySchedule() {
   }
 
   const pendingTasks = tasks
-    .filter(task => !task.completed)
+    .filter(t => !t.completed)
     .sort((a, b) => {
-      const values = {
-        "Muy Alta": 4,
-        "Alta": 3,
-        "Media": 2,
-        "Baja": 1
-      };
-      return values[b.priority] - values[a.priority];
+      const val = { "Muy Alta":4,"Alta":3,"Media":2,"Baja":1 };
+      return val[calculatePriority(b)] - val[calculatePriority(a)];
     });
 
   let schedule = {};
-  weekDays.forEach(day => (schedule[day] = []));
+  weekDays.forEach(d => schedule[d] = []);
 
-  let dayIndex = 0;
-
+  let i = 0;
   pendingTasks.forEach(task => {
     let attempts = 0;
-
-    while (
-      reducedDays.includes(weekDays[dayIndex]) &&
-      attempts < weekDays.length
-    ) {
-      dayIndex = (dayIndex + 1) % weekDays.length;
+    while (reducedDays.includes(weekDays[i]) && attempts < 7) {
+      i = (i + 1) % 7;
       attempts++;
     }
-
-    schedule[weekDays[dayIndex]].push(task.text);
-    task.assignedDay = weekDays[dayIndex];
-    dayIndex = (dayIndex + 1) % weekDays.length;
+    schedule[weekDays[i]].push(task.text);
+    i = (i + 1) % 7;
   });
 
   renderSchedule(schedule);
 }
 
+// ---------------- MOSTRAR HORARIO ----------------
 function renderSchedule(schedule) {
-  const scheduleDiv = document.getElementById("schedule");
-  scheduleDiv.innerHTML = "<h3>Horario semanal</h3>";
+  const div = document.getElementById("schedule");
+  div.innerHTML = "<h3>Horario semanal</h3>";
 
   weekDays.forEach(day => {
-    const dayBlock = document.createElement("div");
-    dayBlock.innerHTML = "<strong>" + day + "</strong>";
+    const block = document.createElement("div");
+    block.innerHTML = "<strong>" + day + "</strong>";
 
     if (schedule[day].length === 0) {
-      dayBlock.innerHTML += "<p>Sin tareas</p>";
+      block.innerHTML += "<p>Sin tareas</p>";
     } else {
       const ul = document.createElement("ul");
-      schedule[day].forEach(task => {
+      schedule[day].forEach(t => {
         const li = document.createElement("li");
-        li.textContent = task;
+        li.textContent = t;
         ul.appendChild(li);
       });
-      dayBlock.appendChild(ul);
+      block.appendChild(ul);
     }
 
-    scheduleDiv.appendChild(dayBlock);
+    div.appendChild(block);
   });
 }
 
-/* ---------------- INICIO ---------------- */
-
-window.onload = () => {
-  loadTasks();
-  renderTasks();
-};
+// Inicializar
+renderTasks();
