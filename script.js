@@ -6,22 +6,12 @@ const complexityInput = document.getElementById("complexityInput");
 const typeInput = document.getElementById("typeInput");
 const addTaskBtn = document.getElementById("addTaskBtn");
 const taskList = document.getElementById("taskList");
+const generateBtn = document.getElementById("generateScheduleBtn");
 const calendarDiv = document.getElementById("calendar");
 
 const weekDays = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
-const hours = ["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00"];
 
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-let schedule = {};
-
-function initSchedule() {
-  weekDays.forEach(day => {
-    schedule[day] = {};
-    hours.forEach(hour => {
-      schedule[day][hour] = null;
-    });
-  });
-}
 
 function calculatePriority(task) {
   const today = new Date();
@@ -103,72 +93,52 @@ addTaskBtn.onclick = () => {
   durationInput.value = 1;
 };
 
-function renderCalendar() {
+generateBtn.onclick = () => {
+  generateSchedule();
+};
+
+function generateSchedule() {
+  const pending = tasks
+    .filter(t => !t.completed)
+    .sort((a,b) => {
+      const val = { "Muy Alta":4,"Alta":3,"Media":2,"Baja":1 };
+      return val[calculatePriority(b)] - val[calculatePriority(a)];
+    });
+
+  let schedule = {};
+  weekDays.forEach(day => schedule[day] = "");
+
+  let dayIndex = 0;
+
+  pending.forEach(task => {
+    for (let i = 0; i < task.duration; i++) {
+      if (dayIndex >= 7) break;
+      schedule[weekDays[dayIndex]] = task.text;
+      dayIndex++;
+    }
+  });
+
+  renderCalendar(schedule);
+}
+
+function renderCalendar(schedule) {
   calendarDiv.innerHTML = "";
   const table = document.createElement("table");
 
-  const headerRow = document.createElement("tr");
-  headerRow.appendChild(document.createElement("th"));
+  const row = document.createElement("tr");
 
   weekDays.forEach(day => {
-    const th = document.createElement("th");
-    th.textContent = day;
-    headerRow.appendChild(th);
+    const cell = document.createElement("td");
+    if (schedule[day]) {
+      cell.innerHTML = "<div class='task-block'>" + schedule[day] + "</div>";
+    } else {
+      cell.textContent = "Libre";
+    }
+    row.appendChild(cell);
   });
 
-  table.appendChild(headerRow);
-
-  hours.forEach((hour, hourIndex) => {
-    const row = document.createElement("tr");
-
-    const hourCell = document.createElement("td");
-    hourCell.textContent = hour;
-    row.appendChild(hourCell);
-
-    weekDays.forEach(day => {
-      const cell = document.createElement("td");
-
-      if (schedule[day][hour]) {
-        cell.innerHTML = '<div class="task-block">' + schedule[day][hour] + '</div>';
-      }
-
-      cell.onclick = () => assignTaskToSlot(day, hourIndex);
-
-      row.appendChild(cell);
-    });
-
-    table.appendChild(row);
-  });
-
+  table.appendChild(row);
   calendarDiv.appendChild(table);
 }
 
-function assignTaskToSlot(day, hourIndex) {
-  const pending = tasks.filter(t => !t.completed);
-
-  if (pending.length === 0) {
-    alert("No hay tareas pendientes.");
-    return;
-  }
-
-  const taskName = prompt("Escribe el nombre exacto de la tarea que quieres asignar:");
-
-  const task = tasks.find(t => t.text === taskName && !t.completed);
-
-  if (!task) {
-    alert("Tarea no encontrada.");
-    return;
-  }
-
-  for (let i = 0; i < task.duration; i++) {
-    const hour = hours[hourIndex + i];
-    if (!hour) break;
-    schedule[day][hour] = task.text;
-  }
-
-  renderCalendar();
-}
-
-initSchedule();
 renderTasks();
-renderCalendar();
