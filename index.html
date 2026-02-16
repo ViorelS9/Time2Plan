@@ -22,14 +22,15 @@ table {
 
 th, td {
   border: 1px solid #ccc;
-  width: 120px;
-  height: 60px;
+  width: 110px;
+  height: 50px;
   text-align: center;
 }
 
 .task-block {
   background-color: #4a90e2;
   color: white;
+  font-size: 12px;
 }
 
 .completed {
@@ -43,14 +44,17 @@ th, td {
 
 <h2>Gestor de tareas</h2>
 
-<input id="taskInput" placeholder="Título de la tarea">
+<input id="taskInput" placeholder="Título">
 <textarea id="descriptionInput" placeholder="Descripción"></textarea>
 
 <label>Fecha</label>
 <input type="date" id="dateInput">
 
-<label>Duración (días)</label>
-<input type="number" id="durationInput" min="1" value="1">
+<label>Duración (horas por día)</label>
+<input type="number" id="hoursPerDayInput" min="1" max="5" value="1">
+
+<label>Días necesarios</label>
+<input type="number" id="durationDaysInput" min="1" value="1">
 
 <label>Complejidad</label>
 <select id="complexityInput">
