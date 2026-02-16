@@ -22,18 +22,14 @@ table {
 
 th, td {
   border: 1px solid #ccc;
-  width: 100px;
-  height: 40px;
+  width: 120px;
+  height: 60px;
   text-align: center;
-  position: relative;
-  cursor: pointer;
 }
 
 .task-block {
   background-color: #4a90e2;
   color: white;
-  height: 100%;
-  width: 100%;
 }
 
 .completed {
@@ -53,8 +49,8 @@ th, td {
 <label>Fecha</label>
 <input type="date" id="dateInput">
 
-<label>Duración (horas)</label>
-<input type="number" id="durationInput" min="1" max="8" value="1">
+<label>Duración (días)</label>
+<input type="number" id="durationInput" min="1" value="1">
 
 <label>Complejidad</label>
 <select id="complexityInput">
@@ -73,7 +69,11 @@ th, td {
 
 <ul id="taskList"></ul>
 
-<h3>Horario semanal (click para asignar)</h3>
+<hr>
+
+<button id="generateScheduleBtn">Generar horario semanal</button>
+
+<h3>Horario semanal</h3>
 <div id="calendar"></div>
 
 <script src="script.js"></script>
