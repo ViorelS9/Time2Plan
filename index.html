@@ -1,67 +1,69 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Planificador Inteligente</title>
-  <link rel="stylesheet" href="style.css">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
+<meta charset="UTF-8">
+<title>Planificador Inteligente</title>
 
-    input, select, button, textarea {
-      margin: 5px 0;
-      display: block;
-    }
+<style>
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+}
 
-    li {
-      margin-bottom: 10px;
-      border-bottom: 1px solid #ccc;
-      padding-bottom: 5px;
-    }
+input, select, button, textarea {
+  margin: 5px 0;
+  display: block;
+}
 
-    .completed {
-      text-decoration: line-through;
-      color: gray;
-    }
+table {
+  border-collapse: collapse;
+  margin-top: 20px;
+}
 
-    .description {
-      display: none;
-      margin-top: 5px;
-      font-size: 0.9em;
-    }
+th, td {
+  border: 1px solid #ccc;
+  width: 100px;
+  height: 40px;
+  text-align: center;
+  position: relative;
+  cursor: pointer;
+}
 
-    .task-title {
-      cursor: pointer;
-      font-weight: bold;
-    }
+.task-block {
+  background-color: #4a90e2;
+  color: white;
+  height: 100%;
+  width: 100%;
+}
 
-    #schedule div {
-      border: 1px solid #ccc;
-      padding: 5px;
-      margin: 5px 0;
-    }
-  </style>
+.completed {
+  text-decoration: line-through;
+  color: gray;
+}
+</style>
 </head>
+
 <body>
 
 <h2>Gestor de tareas</h2>
 
 <input id="taskInput" placeholder="Título de la tarea">
-<textarea id="descriptionInput" placeholder="Descripción de la tarea"></textarea>
+<textarea id="descriptionInput" placeholder="Descripción"></textarea>
 
-<label>Fecha de entrega</label>
+<label>Fecha</label>
 <input type="date" id="dateInput">
 
-<label>Complejidad percibida</label>
+<label>Duración (horas)</label>
+<input type="number" id="durationInput" min="1" max="8" value="1">
+
+<label>Complejidad</label>
 <select id="complexityInput">
   <option value="Baja">Baja</option>
   <option value="Media">Media</option>
   <option value="Alta">Alta</option>
 </select>
 
-<label>Tipo de tarea</label>
+<label>Tipo</label>
 <select id="typeInput">
   <option value="Escolar">Escolar</option>
   <option value="Personal">Personal</option>
@@ -71,12 +73,9 @@
 
 <ul id="taskList"></ul>
 
-<hr>
+<h3>Horario semanal (click para asignar)</h3>
+<div id="calendar"></div>
 
-<button onclick="generateWeeklySchedule()">Generar horario semanal</button>
-<div id="schedule"></div>
-
-<!-- IMPORTANTE: cargar JS al final -->
 <script src="script.js"></script>
 </body>
 </html>
