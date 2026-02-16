@@ -1,7 +1,8 @@
 const taskInput = document.getElementById("taskInput");
 const descriptionInput = document.getElementById("descriptionInput");
 const dateInput = document.getElementById("dateInput");
-const durationInput = document.getElementById("durationInput");
+const hoursPerDayInput = document.getElementById("hoursPerDayInput");
+const durationDaysInput = document.getElementById("durationDaysInput");
 const complexityInput = document.getElementById("complexityInput");
 const typeInput = document.getElementById("typeInput");
 const addTaskBtn = document.getElementById("addTaskBtn");
@@ -10,6 +11,7 @@ const generateBtn = document.getElementById("generateScheduleBtn");
 const calendarDiv = document.getElementById("calendar");
 
 const weekDays = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
+const hours = ["13:00","14:00","15:00","16:00","17:00","18:00"];
 
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
@@ -26,7 +28,6 @@ function calculatePriority(task) {
   else score += 1;
 
   if (task.complexity === "Alta") score += 2;
-  if (task.complexity === "Media") score += 1;
   if (task.type === "Escolar") score += 2;
 
   if (score >= 7) return "Muy Alta";
@@ -78,7 +79,8 @@ addTaskBtn.onclick = () => {
     text: taskInput.value,
     description: descriptionInput.value,
     dueDate: dateInput.value,
-    duration: parseInt(durationInput.value),
+    hoursPerDay: parseInt(hoursPerDayInput.value),
+    durationDays: parseInt(durationDaysInput.value),
     complexity: complexityInput.value,
     type: typeInput.value,
     completed: false
@@ -86,11 +88,6 @@ addTaskBtn.onclick = () => {
 
   saveTasks();
   renderTasks();
-
-  taskInput.value = "";
-  descriptionInput.value = "";
-  dateInput.value = "";
-  durationInput.value = 1;
 };
 
 generateBtn.onclick = () => {
@@ -98,6 +95,19 @@ generateBtn.onclick = () => {
 };
 
 function generateSchedule() {
+
+  const preferences = prompt("¿Días ocupados? Ej: martes ocupado, jueves ocupado");
+
+  let blockedDays = [];
+
+  if (preferences) {
+    weekDays.forEach(day => {
+      if (preferences.toLowerCase().includes(day.toLowerCase())) {
+        blockedDays.push(day);
+      }
+    });
+  }
+
   const pending = tasks
     .filter(t => !t.completed)
     .sort((a,b) => {
@@ -106,14 +116,30 @@ function generateSchedule() {
     });
 
   let schedule = {};
-  weekDays.forEach(day => schedule[day] = "");
+  weekDays.forEach(day => {
+    schedule[day] = {};
+    hours.forEach(hour => schedule[day][hour] = "");
+  });
 
   let dayIndex = 0;
 
   pending.forEach(task => {
-    for (let i = 0; i < task.duration; i++) {
-      if (dayIndex >= 7) break;
-      schedule[weekDays[dayIndex]] = task.text;
+
+    let daysAssigned = 0;
+
+    while (daysAssigned < task.durationDays && dayIndex < 7) {
+
+      let currentDay = weekDays[dayIndex];
+
+      if (!blockedDays.includes(currentDay)) {
+
+        for (let h = 0; h < task.hoursPerDay && h < hours.length; h++) {
+          schedule[currentDay][hours[h]] = task.text;
+        }
+
+        daysAssigned++;
+      }
+
       dayIndex++;
     }
   });
@@ -122,22 +148,43 @@ function generateSchedule() {
 }
 
 function renderCalendar(schedule) {
+
   calendarDiv.innerHTML = "";
   const table = document.createElement("table");
 
-  const row = document.createElement("tr");
+  const headerRow = document.createElement("tr");
+  headerRow.appendChild(document.createElement("th"));
 
   weekDays.forEach(day => {
-    const cell = document.createElement("td");
-    if (schedule[day]) {
-      cell.innerHTML = "<div class='task-block'>" + schedule[day] + "</div>";
-    } else {
-      cell.textContent = "Libre";
-    }
-    row.appendChild(cell);
+    const th = document.createElement("th");
+    th.textContent = day;
+    headerRow.appendChild(th);
   });
 
-  table.appendChild(row);
+  table.appendChild(headerRow);
+
+  hours.forEach(hour => {
+    const row = document.createElement("tr");
+
+    const hourCell = document.createElement("td");
+    hourCell.textContent = hour;
+    row.appendChild(hourCell);
+
+    weekDays.forEach(day => {
+      const cell = document.createElement("td");
+
+      if (schedule[day][hour]) {
+        cell.innerHTML = "<div class='task-block'>" + schedule[day][hour] + "</div>";
+      } else {
+        cell.textContent = "";
+      }
+
+      row.appendChild(cell);
+    });
+
+    table.appendChild(row);
+  });
+
   calendarDiv.appendChild(table);
 }
 
