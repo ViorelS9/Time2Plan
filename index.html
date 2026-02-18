@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Planificador Inteligente</title>
+<title>Planificador Pro</title>
 
 <style>
 body { font-family: Arial; margin:20px; }
@@ -22,12 +22,14 @@ th, td {
   width:100px;
   height:50px;
   text-align:center;
+  vertical-align:top;
 }
 
 .task-block {
   background:#4a90e2;
   color:white;
   font-size:12px;
+  cursor:grab;
 }
 
 .completed {
@@ -42,6 +44,13 @@ th, td {
   margin-top:10px;
   background:#f5f5f5;
 }
+
+.folder {
+  background:#ddd;
+  padding:5px;
+  margin:5px 0;
+  cursor:pointer;
+}
 </style>
 </head>
 
@@ -50,9 +59,6 @@ th, td {
 <h2>Gestor de tareas</h2>
 
 <input id="taskInput" placeholder="Título">
-<textarea id="descriptionInput" placeholder="Descripción"></textarea>
-
-<label>Fecha límite</label>
 <input type="date" id="dateInput">
 
 <label>Horas por día</label>
@@ -61,14 +67,12 @@ th, td {
 <label>Días necesarios</label>
 <input type="number" id="durationDaysInput" min="1" value="1">
 
-<label>Complejidad</label>
 <select id="complexityInput">
   <option>Baja</option>
   <option>Media</option>
   <option>Alta</option>
 </select>
 
-<label>Tipo</label>
 <select id="typeInput">
   <option>Escolar</option>
   <option>Personal</option>
@@ -83,22 +87,36 @@ th, td {
 <button id="generateScheduleBtn">Generar horario</button>
 
 <div id="scheduleConfig">
-  <h4>Configurar horario</h4>
-
   <label>Días ocupados (ej: Martes,Jueves)</label>
   <input id="blockedDaysInput">
 
   <label>Hora inicio</label>
-  <input type="number" id="startHourInput" min="0" max="23" value="13">
+  <input type="number" id="startHourInput" value="13">
 
   <label>Hora fin</label>
-  <input type="number" id="endHourInput" min="1" max="23" value="18">
+  <input type="number" id="endHourInput" value="18">
 
   <button id="confirmScheduleBtn">Confirmar</button>
 </div>
 
 <h3>Horario semanal</h3>
 <div id="calendar"></div>
+
+<hr>
+
+<h2>Notas</h2>
+
+<input id="folderInput" placeholder="Nueva carpeta">
+<button id="addFolderBtn">Crear carpeta</button>
+
+<div id="folders"></div>
+
+<div id="notesSection" style="display:none;">
+  <h3 id="currentFolderTitle"></h3>
+  <textarea id="noteInput" placeholder="Escribe tu nota"></textarea>
+  <button id="saveNoteBtn">Guardar nota</button>
+  <div id="notesList"></div>
+</div>
 
 <script src="script.js"></script>
 </body>
