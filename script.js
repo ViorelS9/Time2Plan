@@ -10,6 +10,9 @@ const taskList = document.getElementById("taskList");
 const generateBtn = document.getElementById("generateScheduleBtn");
 const calendarDiv = document.getElementById("calendar");
 
+const configDiv = document.getElementById("scheduleConfig");
+const confirmBtn = document.getElementById("confirmScheduleBtn");
+
 const weekDays = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
 
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
@@ -17,7 +20,7 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 function calculatePriority(task) {
   const today = new Date();
   const due = new Date(task.dueDate);
-  const diff = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+  const diff = Math.ceil((due - today)/(1000*60*60*24));
 
   let score = 0;
 
@@ -42,11 +45,12 @@ function saveTasks() {
 function renderTasks() {
   taskList.innerHTML = "";
 
-  tasks.forEach((task, index) => {
-    task.priority = calculatePriority(task);
+  tasks.forEach((task,index) => {
 
     const li = document.createElement("li");
-    li.textContent = task.text + " | Prioridad: " + task.priority;
+    li.textContent = task.text + " | Prioridad: " + calculatePriority(task);
+
+    if (task.completed) li.classList.add("completed");
 
     const completeBtn = document.createElement("button");
     completeBtn.textContent = "Completar";
@@ -59,18 +63,20 @@ function renderTasks() {
     const deleteBtn = document.createElement("button");
     deleteBtn.textContent = "Eliminar";
     deleteBtn.onclick = () => {
-      tasks.splice(index, 1);
+      tasks.splice(index,1);
       saveTasks();
       renderTasks();
     };
 
     li.appendChild(completeBtn);
     li.appendChild(deleteBtn);
+
     taskList.appendChild(li);
   });
 }
 
 addTaskBtn.onclick = () => {
+
   if (!taskInput.value || !dateInput.value) return;
 
   tasks.push({
@@ -81,7 +87,7 @@ addTaskBtn.onclick = () => {
     durationDays: parseInt(durationDaysInput.value),
     complexity: complexityInput.value,
     type: typeInput.value,
-    completed: false
+    completed:false
   });
 
   saveTasks();
@@ -89,14 +95,24 @@ addTaskBtn.onclick = () => {
 };
 
 generateBtn.onclick = () => {
+  configDiv.style.display = "block";
+};
+
+confirmBtn.onclick = () => {
+  configDiv.style.display = "none";
   generateSchedule();
 };
 
 function generateSchedule() {
 
-  const preferences = prompt("¿Días ocupados? Ej: martes ocupado, jueves ocupado");
-  const startHour = parseInt(prompt("Hora inicio disponible (ej: 13)"));
-  const endHour = parseInt(prompt("Hora fin disponible (ej: 18)"));
+  const preferences = document.getElementById("blockedDaysInput").value;
+  const startHour = parseInt(document.getElementById("startHourInput").value);
+  const endHour = parseInt(document.getElementById("endHourInput").value);
+
+  if (isNaN(startHour) || isNaN(endHour) || startHour >= endHour) {
+    alert("Horas inválidas");
+    return;
+  }
 
   let blockedDays = [];
 
@@ -109,79 +125,76 @@ function generateSchedule() {
   }
 
   let hours = [];
-  for (let h = startHour; h < endHour; h++) {
+  for (let h=startHour; h<endHour; h++) {
     hours.push(h + ":00");
   }
 
   const pending = tasks
-    .filter(t => !t.completed)
-    .sort((a,b) => {
-      const val = { "Muy Alta":4,"Alta":3,"Media":2,"Baja":1 };
+    .filter(t=>!t.completed)
+    .sort((a,b)=>{
+      const val = {"Muy Alta":4,"Alta":3,"Media":2,"Baja":1};
       return val[calculatePriority(b)] - val[calculatePriority(a)];
     });
 
   let schedule = {};
-  weekDays.forEach(day => {
-    schedule[day] = {};
-    hours.forEach(hour => schedule[day][hour] = "");
+  weekDays.forEach(day=>{
+    schedule[day]={};
+    hours.forEach(hour=>schedule[day][hour]="");
   });
 
   let dayIndex = 0;
 
-  pending.forEach(task => {
+  pending.forEach(task=>{
+    let assignedDays=0;
 
-    let daysAssigned = 0;
+    while (assignedDays<task.durationDays && dayIndex<7) {
 
-    while (daysAssigned < task.durationDays && dayIndex < 7) {
-
-      let currentDay = weekDays[dayIndex];
+      let currentDay=weekDays[dayIndex];
 
       if (!blockedDays.includes(currentDay)) {
 
-        for (let h = 0; h < task.hoursPerDay && h < hours.length; h++) {
+        for (let h=0; h<task.hoursPerDay && h<hours.length; h++) {
           schedule[currentDay][hours[h]] = task.text;
         }
 
-        daysAssigned++;
+        assignedDays++;
       }
 
       dayIndex++;
     }
   });
 
-  renderCalendar(schedule, hours);
+  renderCalendar(schedule,hours);
 }
 
-function renderCalendar(schedule, hours) {
+function renderCalendar(schedule,hours){
 
-  calendarDiv.innerHTML = "";
-  const table = document.createElement("table");
+  calendarDiv.innerHTML="";
+  const table=document.createElement("table");
 
-  const headerRow = document.createElement("tr");
-  headerRow.appendChild(document.createElement("th"));
+  const header=document.createElement("tr");
+  header.appendChild(document.createElement("th"));
 
-  weekDays.forEach(day => {
-    const th = document.createElement("th");
-    th.textContent = day;
-    headerRow.appendChild(th);
+  weekDays.forEach(day=>{
+    const th=document.createElement("th");
+    th.textContent=day;
+    header.appendChild(th);
   });
 
-  table.appendChild(headerRow);
+  table.appendChild(header);
 
-  hours.forEach(hour => {
-    const row = document.createElement("tr");
+  hours.forEach(hour=>{
+    const row=document.createElement("tr");
 
-    const hourCell = document.createElement("td");
-    hourCell.textContent = hour;
+    const hourCell=document.createElement("td");
+    hourCell.textContent=hour;
     row.appendChild(hourCell);
 
-    weekDays.forEach(day => {
-      const cell = document.createElement("td");
+    weekDays.forEach(day=>{
+      const cell=document.createElement("td");
 
       if (schedule[day][hour]) {
-        cell.innerHTML = "<div style='background:#4a90e2;color:white'>" +
-          schedule[day][hour] +
-          "</div>";
+        cell.innerHTML="<div class='task-block'>"+schedule[day][hour]+"</div>";
       }
 
       row.appendChild(cell);
