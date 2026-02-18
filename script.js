@@ -11,7 +11,6 @@ const generateBtn = document.getElementById("generateScheduleBtn");
 const calendarDiv = document.getElementById("calendar");
 
 const weekDays = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
-const hours = ["13:00","14:00","15:00","16:00","17:00","18:00"];
 
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
@@ -48,7 +47,6 @@ function renderTasks() {
 
     const li = document.createElement("li");
     li.textContent = task.text + " | Prioridad: " + task.priority;
-    if (task.completed) li.classList.add("completed");
 
     const completeBtn = document.createElement("button");
     completeBtn.textContent = "Completar";
@@ -97,6 +95,8 @@ generateBtn.onclick = () => {
 function generateSchedule() {
 
   const preferences = prompt("¿Días ocupados? Ej: martes ocupado, jueves ocupado");
+  const startHour = parseInt(prompt("Hora inicio disponible (ej: 13)"));
+  const endHour = parseInt(prompt("Hora fin disponible (ej: 18)"));
 
   let blockedDays = [];
 
@@ -106,6 +106,11 @@ function generateSchedule() {
         blockedDays.push(day);
       }
     });
+  }
+
+  let hours = [];
+  for (let h = startHour; h < endHour; h++) {
+    hours.push(h + ":00");
   }
 
   const pending = tasks
@@ -144,10 +149,10 @@ function generateSchedule() {
     }
   });
 
-  renderCalendar(schedule);
+  renderCalendar(schedule, hours);
 }
 
-function renderCalendar(schedule) {
+function renderCalendar(schedule, hours) {
 
   calendarDiv.innerHTML = "";
   const table = document.createElement("table");
@@ -174,9 +179,9 @@ function renderCalendar(schedule) {
       const cell = document.createElement("td");
 
       if (schedule[day][hour]) {
-        cell.innerHTML = "<div class='task-block'>" + schedule[day][hour] + "</div>";
-      } else {
-        cell.textContent = "";
+        cell.innerHTML = "<div style='background:#4a90e2;color:white'>" +
+          schedule[day][hour] +
+          "</div>";
       }
 
       row.appendChild(cell);
