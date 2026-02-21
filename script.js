@@ -1,17 +1,25 @@
 const weekDays=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
 
 let tasks=JSON.parse(localStorage.getItem("tasks"))||[];
-let folders=JSON.parse(localStorage.getItem("folders"))||{};
-let currentFolder=null;
+let documents=JSON.parse(localStorage.getItem("documents"))||{};
+let currentDoc=null;
+let currentSchedule=null;
+let currentHours=null;
 
 const calendarDiv=document.getElementById("calendar");
 const taskList=document.getElementById("taskList");
 
+/* =========================
+   GUARDAR TODO
+========================= */
 function saveAll(){
   localStorage.setItem("tasks",JSON.stringify(tasks));
-  localStorage.setItem("folders",JSON.stringify(folders));
+  localStorage.setItem("documents",JSON.stringify(documents));
 }
 
+/* =========================
+   PRIORIDAD
+========================= */
 function calculatePriority(task){
   const diff=Math.ceil((new Date(task.dueDate)-new Date())/(1000*60*60*24));
   let score=diff<=1?4:diff<=3?3:diff<=6?2:1;
@@ -20,14 +28,17 @@ function calculatePriority(task){
   return score;
 }
 
+/* =========================
+   TAREAS
+========================= */
 document.getElementById("addTaskBtn").onclick=()=>{
   tasks.push({
-    text:document.getElementById("taskInput").value,
-    dueDate:document.getElementById("dateInput").value,
-    hoursPerDay:parseInt(document.getElementById("hoursPerDayInput").value),
-    durationDays:parseInt(document.getElementById("durationDaysInput").value),
-    complexity:document.getElementById("complexityInput").value,
-    type:document.getElementById("typeInput").value,
+    text:taskInput.value,
+    dueDate:dateInput.value,
+    hoursPerDay:parseInt(hoursPerDayInput.value),
+    durationDays:parseInt(durationDaysInput.value),
+    complexity:complexityInput.value,
+    type:typeInput.value,
     completed:false
   });
   saveAll();
@@ -36,27 +47,30 @@ document.getElementById("addTaskBtn").onclick=()=>{
 
 function renderTasks(){
   taskList.innerHTML="";
-  tasks.forEach((t,i)=>{
+  tasks.forEach(t=>{
     const li=document.createElement("li");
     li.textContent=t.text;
     taskList.appendChild(li);
   });
 }
 
-document.getElementById("generateScheduleBtn").onclick=()=>{
-  document.getElementById("scheduleConfig").style.display="block";
+/* =========================
+   GENERAR HORARIO
+========================= */
+generateScheduleBtn.onclick=()=>{
+  scheduleConfig.style.display="block";
 };
 
-document.getElementById("confirmScheduleBtn").onclick=()=>{
-  document.getElementById("scheduleConfig").style.display="none";
+confirmScheduleBtn.onclick=()=>{
+  scheduleConfig.style.display="none";
   generateSchedule();
 };
 
 function generateSchedule(){
 
-  const blockedInput=document.getElementById("blockedDaysInput").value;
-  const start=parseInt(document.getElementById("startHourInput").value);
-  const end=parseInt(document.getElementById("endHourInput").value);
+  const blockedInput=blockedDaysInput.value;
+  const start=parseInt(startHourInput.value);
+  const end=parseInt(endHourInput.value);
 
   let blocked=[];
   weekDays.forEach(d=>{
@@ -90,10 +104,17 @@ function generateSchedule(){
     }
   });
 
-  renderCalendar(schedule,hours);
+  currentSchedule=schedule;
+  currentHours=hours;
+
+  renderCalendar();
 }
 
-function renderCalendar(schedule,hours){
+/* =========================
+   CALENDARIO DRAG REAL
+========================= */
+function renderCalendar(){
+
   calendarDiv.innerHTML="";
   const table=document.createElement("table");
 
@@ -106,32 +127,42 @@ function renderCalendar(schedule,hours){
   });
   table.appendChild(header);
 
-  hours.forEach(h=>{
+  currentHours.forEach(hour=>{
     const row=document.createElement("tr");
+
     const hourCell=document.createElement("td");
-    hourCell.textContent=h;
+    hourCell.textContent=hour;
     row.appendChild(hourCell);
 
-    weekDays.forEach(d=>{
+    weekDays.forEach(day=>{
       const cell=document.createElement("td");
-      cell.dataset.day=d;
-      cell.dataset.hour=h;
+      cell.dataset.day=day;
+      cell.dataset.hour=hour;
 
       cell.ondragover=e=>e.preventDefault();
+
       cell.ondrop=e=>{
         e.preventDefault();
-        const data=e.dataTransfer.getData("text");
-        cell.innerHTML=data;
+        const data=JSON.parse(e.dataTransfer.getData("task"));
+        currentSchedule[data.day][data.hour]="";
+        currentSchedule[day][hour]=data.text;
+        renderCalendar();
       };
 
-      if(schedule[d][h]){
+      if(currentSchedule[day][hour]){
         const div=document.createElement("div");
         div.className="task-block";
-        div.textContent=schedule[d][h];
+        div.textContent=currentSchedule[day][hour];
         div.draggable=true;
+
         div.ondragstart=e=>{
-          e.dataTransfer.setData("text",div.outerHTML);
+          e.dataTransfer.setData("task",JSON.stringify({
+            text:currentSchedule[day][hour],
+            day:day,
+            hour:hour
+          }));
         };
+
         cell.appendChild(div);
       }
 
@@ -144,48 +175,39 @@ function renderCalendar(schedule,hours){
   calendarDiv.appendChild(table);
 }
 
-document.getElementById("addFolderBtn").onclick=()=>{
-  const name=document.getElementById("folderInput").value;
+/* =========================
+   DOCUMENTOS TIPO GOOGLE DOCS
+========================= */
+addFolderBtn.onclick=()=>{
+  const name=folderInput.value;
   if(!name)return;
-  folders[name]=[];
+  documents[name]="";
   saveAll();
   renderFolders();
 };
 
 function renderFolders(){
-  const container=document.getElementById("folders");
-  container.innerHTML="";
-  Object.keys(folders).forEach(name=>{
+  folders.innerHTML="";
+  Object.keys(documents).forEach(name=>{
     const div=document.createElement("div");
     div.className="folder";
     div.textContent=name;
     div.onclick=()=>{
-      currentFolder=name;
-      document.getElementById("notesSection").style.display="block";
-      document.getElementById("currentFolderTitle").textContent=name;
-      renderNotes();
+      currentDoc=name;
+      documentSection.style.display="block";
+      docTitle.textContent=name;
+      docEditor.innerHTML=documents[name];
     };
-    container.appendChild(div);
+    folders.appendChild(div);
   });
 }
 
-document.getElementById("saveNoteBtn").onclick=()=>{
-  if(!currentFolder)return;
-  const note=document.getElementById("noteInput").value;
-  folders[currentFolder].push(note);
-  saveAll();
-  renderNotes();
-};
-
-function renderNotes(){
-  const list=document.getElementById("notesList");
-  list.innerHTML="";
-  folders[currentFolder].forEach(n=>{
-    const div=document.createElement("div");
-    div.textContent=n;
-    list.appendChild(div);
-  });
-}
+docEditor.addEventListener("input",()=>{
+  if(currentDoc){
+    documents[currentDoc]=docEditor.innerHTML;
+    saveAll();
+  }
+});
 
 renderTasks();
 renderFolders();
