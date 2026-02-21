@@ -6,20 +6,13 @@ let currentDoc=null;
 let currentSchedule=null;
 let currentHours=null;
 
-const calendarDiv=document.getElementById("calendar");
-const taskList=document.getElementById("taskList");
-
-/* =========================
-   GUARDAR TODO
-========================= */
+/* ========= GUARDAR ========= */
 function saveAll(){
   localStorage.setItem("tasks",JSON.stringify(tasks));
   localStorage.setItem("documents",JSON.stringify(documents));
 }
 
-/* =========================
-   PRIORIDAD
-========================= */
+/* ========= PRIORIDAD ========= */
 function calculatePriority(task){
   const diff=Math.ceil((new Date(task.dueDate)-new Date())/(1000*60*60*24));
   let score=diff<=1?4:diff<=3?3:diff<=6?2:1;
@@ -28,10 +21,10 @@ function calculatePriority(task){
   return score;
 }
 
-/* =========================
-   TAREAS
-========================= */
-document.getElementById("addTaskBtn").onclick=()=>{
+/* ========= TAREAS ========= */
+addTaskBtn.onclick=()=>{
+  if(!taskInput.value || !dateInput.value) return;
+
   tasks.push({
     text:taskInput.value,
     dueDate:dateInput.value,
@@ -41,6 +34,7 @@ document.getElementById("addTaskBtn").onclick=()=>{
     type:typeInput.value,
     completed:false
   });
+
   saveAll();
   renderTasks();
 };
@@ -54,9 +48,7 @@ function renderTasks(){
   });
 }
 
-/* =========================
-   GENERAR HORARIO
-========================= */
+/* ========= HORARIO ========= */
 generateScheduleBtn.onclick=()=>{
   scheduleConfig.style.display="block";
 };
@@ -68,37 +60,37 @@ confirmScheduleBtn.onclick=()=>{
 
 function generateSchedule(){
 
-  const blockedInput=blockedDaysInput.value;
+  const blockedInput=blockedDaysInput.value.toLowerCase();
   const start=parseInt(startHourInput.value);
   const end=parseInt(endHourInput.value);
 
   let blocked=[];
   weekDays.forEach(d=>{
-    if(blockedInput.toLowerCase().includes(d.toLowerCase()))blocked.push(d);
+    if(blockedInput.includes(d.toLowerCase())) blocked.push(d);
   });
 
   let hours=[];
-  for(let h=start;h<end;h++)hours.push(h+":00");
+  for(let h=start;h<end;h++) hours.push(h+":00");
 
   let schedule={};
   weekDays.forEach(d=>{
     schedule[d]={};
-    hours.forEach(h=>schedule[d][h]="");
+    hours.forEach(h=>schedule[d][h]=null);
   });
 
-  let sorted=tasks.filter(t=>!t.completed).sort((a,b)=>calculatePriority(b)-calculatePriority(a));
+  let sorted=tasks.sort((a,b)=>calculatePriority(b)-calculatePriority(a));
 
   let dayIndex=0;
 
   sorted.forEach(task=>{
-    let count=0;
-    while(count<task.durationDays&&dayIndex<7){
+    let daysAssigned=0;
+    while(daysAssigned<task.durationDays && dayIndex<7){
       let d=weekDays[dayIndex];
       if(!blocked.includes(d)){
-        for(let h=0;h<task.hoursPerDay&&h<hours.length;h++){
-          schedule[d][hours[h]]=task.text;
+        for(let h=0;h<task.hoursPerDay && h<hours.length;h++){
+          schedule[d][hours[h]]={ text:task.text };
         }
-        count++;
+        daysAssigned++;
       }
       dayIndex++;
     }
@@ -110,21 +102,20 @@ function generateSchedule(){
   renderCalendar();
 }
 
-/* =========================
-   CALENDARIO DRAG REAL
-========================= */
 function renderCalendar(){
 
-  calendarDiv.innerHTML="";
+  calendar.innerHTML="";
   const table=document.createElement("table");
 
   const header=document.createElement("tr");
   header.appendChild(document.createElement("th"));
+
   weekDays.forEach(d=>{
     const th=document.createElement("th");
     th.textContent=d;
     header.appendChild(th);
   });
+
   table.appendChild(header);
 
   currentHours.forEach(hour=>{
@@ -136,28 +127,30 @@ function renderCalendar(){
 
     weekDays.forEach(day=>{
       const cell=document.createElement("td");
-      cell.dataset.day=day;
-      cell.dataset.hour=hour;
 
       cell.ondragover=e=>e.preventDefault();
 
       cell.ondrop=e=>{
         e.preventDefault();
         const data=JSON.parse(e.dataTransfer.getData("task"));
-        currentSchedule[data.day][data.hour]="";
-        currentSchedule[day][hour]=data.text;
+
+        currentSchedule[data.day][data.hour]=null;
+        currentSchedule[day][hour]={ text:data.text };
+
         renderCalendar();
       };
 
-      if(currentSchedule[day][hour]){
+      const task=currentSchedule[day][hour];
+
+      if(task){
         const div=document.createElement("div");
         div.className="task-block";
-        div.textContent=currentSchedule[day][hour];
+        div.textContent=task.text;
         div.draggable=true;
 
         div.ondragstart=e=>{
           e.dataTransfer.setData("task",JSON.stringify({
-            text:currentSchedule[day][hour],
+            text:task.text,
             day:day,
             hour:hour
           }));
@@ -172,33 +165,35 @@ function renderCalendar(){
     table.appendChild(row);
   });
 
-  calendarDiv.appendChild(table);
+  calendar.appendChild(table);
 }
 
-/* =========================
-   DOCUMENTOS TIPO GOOGLE DOCS
-========================= */
-addFolderBtn.onclick=()=>{
-  const name=folderInput.value;
-  if(!name)return;
+/* ========= DOCUMENTOS ========= */
+createDocBtn.onclick=()=>{
+  const name=newDocInput.value.trim();
+  if(!name) return;
+
   documents[name]="";
   saveAll();
-  renderFolders();
+  renderDocs();
+  newDocInput.value="";
 };
 
-function renderFolders(){
-  folders.innerHTML="";
+function renderDocs(){
+  docList.innerHTML="";
   Object.keys(documents).forEach(name=>{
     const div=document.createElement("div");
     div.className="folder";
     div.textContent=name;
+
     div.onclick=()=>{
       currentDoc=name;
       documentSection.style.display="block";
       docTitle.textContent=name;
       docEditor.innerHTML=documents[name];
     };
-    folders.appendChild(div);
+
+    docList.appendChild(div);
   });
 }
 
@@ -210,4 +205,4 @@ docEditor.addEventListener("input",()=>{
 });
 
 renderTasks();
-renderFolders();
+renderDocs();
