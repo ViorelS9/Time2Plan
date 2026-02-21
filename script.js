@@ -25,13 +25,15 @@ document.getElementById("btnAddTask").addEventListener("click",function(){
   const days=parseInt(document.getElementById("tDays").value);
   const hours=parseInt(document.getElementById("tHours").value);
   const type=document.getElementById("tType").value;
+  const difficulty=document.getElementById("tDifficulty").value;
 
   if(!title || !date) return alert("Faltan datos");
 
   tasks.push({
     id:Date.now(),
-    title,desc,date,days,hours,type,
-    completed:false
+    title,desc,date,days,hours,type,difficulty,
+    completed:false,
+    showDesc:false
   });
 
   saveAll();
@@ -41,16 +43,20 @@ document.getElementById("btnAddTask").addEventListener("click",function(){
 function renderTasks(){
   const list=document.getElementById("taskList");
   list.innerHTML="";
+
   tasks.forEach(t=>{
     const li=document.createElement("li");
 
     if(t.completed) li.classList.add("completed");
 
     li.innerHTML=`
-      <strong>${t.title}</strong> (${t.type})
+      <strong>${t.title}</strong> 
+      (${t.type} - ${t.difficulty})
       <br>
       <button onclick="toggleComplete(${t.id})">✔ Completar</button>
+      <button onclick="toggleDesc(${t.id})">📄 Ver descripción</button>
       <button onclick="deleteTask(${t.id})">🗑 Eliminar</button>
+      ${t.showDesc ? `<p>${t.desc}</p>` : ""}
     `;
 
     list.appendChild(li);
@@ -60,6 +66,11 @@ function renderTasks(){
 window.toggleComplete=function(id){
   tasks=tasks.map(t=>t.id===id?{...t,completed:!t.completed}:t);
   saveAll();
+  renderTasks();
+}
+
+window.toggleDesc=function(id){
+  tasks=tasks.map(t=>t.id===id?{...t,showDesc:!t.showDesc}:t);
   renderTasks();
 }
 
@@ -73,7 +84,12 @@ window.deleteTask=function(id){
 function priorityScore(task){
   const daysLeft=(new Date(task.date)-new Date())/(1000*60*60*24);
   let score=100-daysLeft;
+
   if(task.type==="Escolar") score+=20;
+
+  if(task.difficulty==="Alta") score+=15;
+  if(task.difficulty==="Media") score+=8;
+
   return score;
 }
 
