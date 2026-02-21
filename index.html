@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Planificador Pro</title>
+<title>Planificador Pro Final</title>
 
 <style>
 body { font-family: Arial; margin:20px; }
@@ -19,8 +19,8 @@ table {
 
 th, td {
   border:1px solid #ccc;
-  width:100px;
-  height:50px;
+  width:110px;
+  height:60px;
   text-align:center;
   vertical-align:top;
 }
@@ -32,10 +32,7 @@ th, td {
   cursor:grab;
 }
 
-.completed {
-  text-decoration: line-through;
-  color: gray;
-}
+.completed { text-decoration: line-through; }
 
 #scheduleConfig {
   display:none;
@@ -47,9 +44,17 @@ th, td {
 
 .folder {
   background:#ddd;
-  padding:5px;
+  padding:6px;
   margin:5px 0;
   cursor:pointer;
+}
+
+#docEditor {
+  width:100%;
+  height:400px;
+  border:1px solid #ccc;
+  padding:10px;
+  outline:none;
 }
 </style>
 </head>
@@ -61,10 +66,7 @@ th, td {
 <input id="taskInput" placeholder="Título">
 <input type="date" id="dateInput">
 
-<label>Horas por día</label>
 <input type="number" id="hoursPerDayInput" min="1" max="6" value="1">
-
-<label>Días necesarios</label>
 <input type="number" id="durationDaysInput" min="1" value="1">
 
 <select id="complexityInput">
@@ -87,15 +89,9 @@ th, td {
 <button id="generateScheduleBtn">Generar horario</button>
 
 <div id="scheduleConfig">
-  <label>Días ocupados (ej: Martes,Jueves)</label>
-  <input id="blockedDaysInput">
-
-  <label>Hora inicio</label>
+  <input id="blockedDaysInput" placeholder="Días ocupados (Martes,Jueves)">
   <input type="number" id="startHourInput" value="13">
-
-  <label>Hora fin</label>
   <input type="number" id="endHourInput" value="18">
-
   <button id="confirmScheduleBtn">Confirmar</button>
 </div>
 
@@ -106,16 +102,14 @@ th, td {
 
 <h2>Notas</h2>
 
-<input id="folderInput" placeholder="Nueva carpeta">
-<button id="addFolderBtn">Crear carpeta</button>
+<input id="folderInput" placeholder="Nueva hoja">
+<button id="addFolderBtn">Crear hoja</button>
 
 <div id="folders"></div>
 
-<div id="notesSection" style="display:none;">
-  <h3 id="currentFolderTitle"></h3>
-  <textarea id="noteInput" placeholder="Escribe tu nota"></textarea>
-  <button id="saveNoteBtn">Guardar nota</button>
-  <div id="notesList"></div>
+<div id="documentSection" style="display:none;">
+  <h3 id="docTitle"></h3>
+  <div id="docEditor" contenteditable="true"></div>
 </div>
 
 <script src="script.js"></script>
