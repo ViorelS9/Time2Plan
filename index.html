@@ -2,18 +2,19 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Planificador Final Estable</title>
+<title>Planificador Completo</title>
 
 <style>
 body { font-family: Arial; margin:20px; }
 
-input, select, button {
+input, select, textarea, button {
   margin:5px 0;
   display:block;
 }
 
-label {
-  font-size:14px;
+textarea {
+  width:300px;
+  height:60px;
 }
 
 table {
@@ -36,16 +37,26 @@ th, td {
   cursor:grab;
 }
 
-.folder {
+.completed { text-decoration: line-through; }
+
+.note-box {
   background:#ddd;
   padding:6px;
   margin:5px 0;
   cursor:pointer;
 }
 
-#docEditor {
+.page-btn {
+  background:#eee;
+  margin:3px;
+  padding:3px 6px;
+  cursor:pointer;
+  display:inline-block;
+}
+
+#editor {
   width:100%;
-  height:400px;
+  height:350px;
   border:1px solid #ccc;
   padding:10px;
   outline:none;
@@ -55,69 +66,51 @@ th, td {
 
 <body>
 
-<h2>Gestor de tareas</h2>
+<h2>Tareas</h2>
 
-<label>Título</label>
-<input id="taskInput">
+<input id="taskTitle" placeholder="Título">
+<textarea id="taskDesc" placeholder="Descripción"></textarea>
 
 <label>Fecha límite</label>
-<input type="date" id="dateInput">
+<input type="date" id="taskDate">
 
-<label>Horas por día (¿cuántas horas trabajarás cada día?)</label>
-<input type="number" id="hoursPerDayInput" min="1" max="8" value="1">
+<label>Horas por día</label>
+<input type="number" id="taskHours" min="1" max="8" value="1">
 
-<label>Duración en días (¿cuántos días necesitas?)</label>
-<input type="number" id="durationDaysInput" min="1" value="1">
+<label>Duración en días</label>
+<input type="number" id="taskDays" min="1" value="1">
 
-<label>Complejidad</label>
-<select id="complexityInput">
+<select id="taskComplexity">
   <option>Baja</option>
   <option>Media</option>
   <option>Alta</option>
 </select>
 
-<label>Tipo</label>
-<select id="typeInput">
+<select id="taskType">
   <option>Escolar</option>
   <option>Personal</option>
 </select>
 
-<button id="addTaskBtn">Agregar tarea</button>
+<button id="addTask">Agregar tarea</button>
 
 <ul id="taskList"></ul>
 
 <hr>
 
-<button id="generateScheduleBtn">Generar horario</button>
+<h2>Notas</h2>
 
-<div id="scheduleConfig" style="display:none;">
-  <label>Días ocupados (ej: Martes,Jueves)</label>
-  <input id="blockedDaysInput">
+<input id="newNoteName" placeholder="Nombre de nota">
+<button id="createNote">Crear nota</button>
 
-  <label>Hora inicio</label>
-  <input type="number" id="startHourInput" value="13">
+<div id="notesList"></div>
 
-  <label>Hora fin</label>
-  <input type="number" id="endHourInput" value="18">
+<div id="noteSection" style="display:none;">
+  <h3 id="noteTitle"></h3>
 
-  <button id="confirmScheduleBtn">Confirmar</button>
-</div>
+  <button id="addPage">Agregar página</button>
+  <div id="pagesBar"></div>
 
-<h3>Horario semanal</h3>
-<div id="calendar"></div>
-
-<hr>
-
-<h2>Documentos</h2>
-
-<input id="newDocInput" placeholder="Nombre del documento">
-<button id="createDocBtn">Crear documento</button>
-
-<div id="docList"></div>
-
-<div id="documentSection" style="display:none;">
-  <h3 id="docTitle"></h3>
-  <div id="docEditor" contenteditable="true"></div>
+  <div id="editor" contenteditable="true"></div>
 </div>
 
 <script src="script.js"></script>
