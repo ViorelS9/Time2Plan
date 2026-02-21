@@ -2,22 +2,21 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Planificador Completo Estable</title>
+<title>Planificador Inteligente</title>
 
 <style>
 body { font-family: Arial; margin:20px; }
 
+section { margin-bottom:40px; }
+
 input, select, textarea, button {
-  margin:5px 0;
   display:block;
+  margin:5px 0;
 }
 
 textarea { width:300px; height:60px; }
 
-table {
-  border-collapse: collapse;
-  margin-top:20px;
-}
+table { border-collapse: collapse; margin-top:15px; }
 
 th, td {
   border:1px solid #ccc;
@@ -34,9 +33,7 @@ th, td {
   cursor:grab;
 }
 
-.completed { text-decoration: line-through; }
-
-.note-box {
+.note-folder {
   background:#ddd;
   padding:6px;
   margin:5px 0;
@@ -44,88 +41,73 @@ th, td {
 }
 
 .page-btn {
-  background:#eee;
-  margin:3px;
-  padding:3px 6px;
-  cursor:pointer;
   display:inline-block;
+  background:#eee;
+  padding:4px 8px;
+  margin:3px;
+  cursor:pointer;
 }
 
 #editor {
-  width:100%;
-  height:350px;
   border:1px solid #ccc;
+  height:300px;
   padding:10px;
-  outline:none;
+  overflow:auto;
 }
 </style>
 </head>
 
 <body>
 
-<h2>Tareas</h2>
+<section>
+<h2>Crear Tarea</h2>
 
-<input id="taskTitle" placeholder="Título">
-<textarea id="taskDesc" placeholder="Descripción"></textarea>
+<input id="tTitle" placeholder="Título">
+<textarea id="tDesc" placeholder="Descripción"></textarea>
+<input type="date" id="tDate">
+<input type="number" id="tDays" placeholder="Días necesarios" min="1" value="1">
+<input type="number" id="tHours" placeholder="Horas por día" min="1" value="1">
 
-<label>Fecha límite</label>
-<input type="date" id="taskDate">
-
-<label>Horas por día</label>
-<input type="number" id="taskHours" min="1" max="8" value="1">
-
-<label>Duración en días</label>
-<input type="number" id="taskDays" min="1" value="1">
-
-<select id="taskComplexity">
-  <option>Baja</option>
-  <option>Media</option>
-  <option>Alta</option>
+<select id="tType">
+  <option value="Escolar">Escolar</option>
+  <option value="Personal">Personal</option>
 </select>
 
-<select id="taskType">
-  <option>Escolar</option>
-  <option>Personal</option>
-</select>
-
-<button id="addTaskBtn">Agregar tarea</button>
+<button id="btnAddTask">Agregar tarea</button>
 
 <ul id="taskList"></ul>
+</section>
 
-<hr>
+<section>
+<h2>Crear Horario</h2>
 
-<h2>Horario</h2>
-
-<button id="generateScheduleBtn">Generar horario</button>
-
-<label>Días ocupados (ej: Martes,Jueves)</label>
-<input id="blockedDays">
-
-<label>Hora inicio</label>
+<input id="blockedDays" placeholder="Días ocupados (ej: Martes,Jueves)">
 <input type="number" id="startHour" value="13">
-
-<label>Hora fin</label>
 <input type="number" id="endHour" value="18">
 
+<button id="btnGenerateSchedule">Generar horario</button>
+
 <div id="calendar"></div>
+</section>
 
-<hr>
-
+<section>
 <h2>Notas</h2>
 
-<input id="newNoteName" placeholder="Nombre de nota">
-<button id="createNoteBtn">Crear nota</button>
+<input id="folderName" placeholder="Nombre carpeta">
+<button id="btnCreateFolder">Crear carpeta</button>
 
-<div id="notesList"></div>
+<div id="folders"></div>
 
-<div id="noteSection" style="display:none;">
-  <h3 id="noteTitle"></h3>
+<div id="noteArea" style="display:none;">
+  <h3 id="folderTitle"></h3>
+  <button id="btnAddPage">Agregar página</button>
+  <input type="file" id="imageUpload">
 
-  <button id="addPageBtn">Agregar página</button>
   <div id="pagesBar"></div>
-
   <div id="editor" contenteditable="true"></div>
 </div>
+
+</section>
 
 <script src="script.js"></script>
 </body>
