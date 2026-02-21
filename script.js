@@ -16,8 +16,16 @@ localStorage.setItem("schedule",JSON.stringify(schedule));
 /* -------- NAVIGATION -------- */
 
 function openSection(id){
-document.querySelectorAll("section").forEach(s=>s.style.display="none");
-document.getElementById(id).style.display="block";
+document.querySelectorAll("section").forEach(s=>{
+s.classList.remove("active");
+});
+
+let sec=document.getElementById(id);
+sec.style.display="block";
+
+setTimeout(()=>{
+sec.classList.add("active");
+},10);
 }
 
 function goHome(){
@@ -113,7 +121,11 @@ document.getElementById("createScheduleForm").style.display="block";
 }
 
 function generateSchedule(){
-let blocked=document.getElementById("blockedDays").value.toLowerCase();
+let blocked=document.getElementById("blockedDays").value
+.toLowerCase()
+.split(",")
+.map(d=>d.trim());
+
 let start=parseInt(startHour.value);
 let end=parseInt(endHour.value);
 
@@ -126,10 +138,28 @@ schedule[d]={};
 hours.forEach(h=>schedule[d][h]=null);
 });
 
-tasks.filter(t=>!t.completed).forEach((t,i)=>{
-let day=weekDays[i%7];
-if(!blocked.includes(day.toLowerCase())){
-schedule[day][hours[0]]={title:t.title};
+let availableDays = weekDays.filter(d=>!blocked.includes(d.toLowerCase()));
+
+let dayIndex=0;
+
+tasks.filter(t=>!t.completed).forEach(task=>{
+if(availableDays.length===0) return;
+
+let placed=false;
+
+while(!placed){
+let day=availableDays[dayIndex % availableDays.length];
+
+for(let h of hours){
+if(!schedule[day][h]){
+schedule[day][h]={title:task.title};
+placed=true;
+break;
+}
+}
+
+dayIndex++;
+if(dayIndex>50) break;
 }
 });
 
@@ -144,6 +174,7 @@ let table=document.createElement("table");
 
 let header=document.createElement("tr");
 header.appendChild(document.createElement("th"));
+
 weekDays.forEach(d=>{
 let th=document.createElement("th");
 th.textContent=d;
@@ -153,21 +184,46 @@ table.appendChild(header);
 
 hours.forEach(hour=>{
 let row=document.createElement("tr");
+
 let hCell=document.createElement("td");
 hCell.textContent=hour;
 row.appendChild(hCell);
 
 weekDays.forEach(day=>{
 let cell=document.createElement("td");
+
+cell.ondragover=e=>e.preventDefault();
+
+cell.ondrop=e=>{
+e.preventDefault();
+let data=JSON.parse(e.dataTransfer.getData("text"));
+schedule[data.day][data.hour]=null;
+schedule[day][hour]={title:data.title};
+saveAll();
+renderCalendar(hours);
+};
+
 let task=schedule[day][hour];
 if(task){
 let div=document.createElement("div");
 div.className="task-block";
 div.textContent=task.title;
+div.draggable=true;
+
+div.ondragstart=e=>{
+e.dataTransfer.setData("text",JSON.stringify({
+title:task.title,
+day:day,
+hour:hour
+}));
+};
+
 cell.appendChild(div);
 }
+
 row.appendChild(cell);
 });
+
 table.appendChild(row);
 });
 
