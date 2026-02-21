@@ -1,208 +1,154 @@
-const weekDays=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+let notes = JSON.parse(localStorage.getItem("notes")) || {};
 
-let tasks=JSON.parse(localStorage.getItem("tasks"))||[];
-let documents=JSON.parse(localStorage.getItem("documents"))||{};
-let currentDoc=null;
-let currentSchedule=null;
-let currentHours=null;
+let currentNote = null;
+let currentPage = 0;
 
-/* ========= GUARDAR ========= */
-function saveAll(){
-  localStorage.setItem("tasks",JSON.stringify(tasks));
-  localStorage.setItem("documents",JSON.stringify(documents));
+/* =====================
+   GUARDAR
+===================== */
+function saveAll() {
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+  localStorage.setItem("notes", JSON.stringify(notes));
 }
 
-/* ========= PRIORIDAD ========= */
-function calculatePriority(task){
-  const diff=Math.ceil((new Date(task.dueDate)-new Date())/(1000*60*60*24));
-  let score=diff<=1?4:diff<=3?3:diff<=6?2:1;
-  if(task.complexity==="Alta")score+=2;
-  if(task.type==="Escolar")score+=2;
-  return score;
-}
+/* =====================
+   TAREAS
+===================== */
+addTask.onclick = () => {
 
-/* ========= TAREAS ========= */
-addTaskBtn.onclick=()=>{
-  if(!taskInput.value || !dateInput.value) return;
+  if(!taskTitle.value || !taskDate.value) return;
 
   tasks.push({
-    text:taskInput.value,
-    dueDate:dateInput.value,
-    hoursPerDay:parseInt(hoursPerDayInput.value),
-    durationDays:parseInt(durationDaysInput.value),
-    complexity:complexityInput.value,
-    type:typeInput.value,
-    completed:false
+    id: Date.now(),
+    title: taskTitle.value,
+    desc: taskDesc.value,
+    date: taskDate.value,
+    hours: parseInt(taskHours.value),
+    days: parseInt(taskDays.value),
+    complexity: taskComplexity.value,
+    type: taskType.value,
+    done: false
   });
 
   saveAll();
   renderTasks();
 };
 
-function renderTasks(){
-  taskList.innerHTML="";
-  tasks.forEach(t=>{
-    const li=document.createElement("li");
-    li.textContent=t.text;
+function renderTasks() {
+  taskList.innerHTML = "";
+
+  tasks.forEach(task => {
+
+    const li = document.createElement("li");
+
+    if(task.done) li.classList.add("completed");
+
+    li.innerHTML = `
+      <strong>${task.title}</strong><br>
+      ${task.desc}<br>
+      Fecha: ${task.date}<br>
+      <button onclick="toggleDone(${task.id})">✔</button>
+      <button onclick="deleteTask(${task.id})">🗑</button>
+    `;
+
     taskList.appendChild(li);
   });
 }
 
-/* ========= HORARIO ========= */
-generateScheduleBtn.onclick=()=>{
-  scheduleConfig.style.display="block";
-};
-
-confirmScheduleBtn.onclick=()=>{
-  scheduleConfig.style.display="none";
-  generateSchedule();
-};
-
-function generateSchedule(){
-
-  const blockedInput=blockedDaysInput.value.toLowerCase();
-  const start=parseInt(startHourInput.value);
-  const end=parseInt(endHourInput.value);
-
-  let blocked=[];
-  weekDays.forEach(d=>{
-    if(blockedInput.includes(d.toLowerCase())) blocked.push(d);
-  });
-
-  let hours=[];
-  for(let h=start;h<end;h++) hours.push(h+":00");
-
-  let schedule={};
-  weekDays.forEach(d=>{
-    schedule[d]={};
-    hours.forEach(h=>schedule[d][h]=null);
-  });
-
-  let sorted=tasks.sort((a,b)=>calculatePriority(b)-calculatePriority(a));
-
-  let dayIndex=0;
-
-  sorted.forEach(task=>{
-    let daysAssigned=0;
-    while(daysAssigned<task.durationDays && dayIndex<7){
-      let d=weekDays[dayIndex];
-      if(!blocked.includes(d)){
-        for(let h=0;h<task.hoursPerDay && h<hours.length;h++){
-          schedule[d][hours[h]]={ text:task.text };
-        }
-        daysAssigned++;
-      }
-      dayIndex++;
-    }
-  });
-
-  currentSchedule=schedule;
-  currentHours=hours;
-
-  renderCalendar();
+function toggleDone(id) {
+  tasks = tasks.map(t => t.id === id ? {...t, done: !t.done} : t);
+  saveAll();
+  renderTasks();
 }
 
-function renderCalendar(){
-
-  calendar.innerHTML="";
-  const table=document.createElement("table");
-
-  const header=document.createElement("tr");
-  header.appendChild(document.createElement("th"));
-
-  weekDays.forEach(d=>{
-    const th=document.createElement("th");
-    th.textContent=d;
-    header.appendChild(th);
-  });
-
-  table.appendChild(header);
-
-  currentHours.forEach(hour=>{
-    const row=document.createElement("tr");
-
-    const hourCell=document.createElement("td");
-    hourCell.textContent=hour;
-    row.appendChild(hourCell);
-
-    weekDays.forEach(day=>{
-      const cell=document.createElement("td");
-
-      cell.ondragover=e=>e.preventDefault();
-
-      cell.ondrop=e=>{
-        e.preventDefault();
-        const data=JSON.parse(e.dataTransfer.getData("task"));
-
-        currentSchedule[data.day][data.hour]=null;
-        currentSchedule[day][hour]={ text:data.text };
-
-        renderCalendar();
-      };
-
-      const task=currentSchedule[day][hour];
-
-      if(task){
-        const div=document.createElement("div");
-        div.className="task-block";
-        div.textContent=task.text;
-        div.draggable=true;
-
-        div.ondragstart=e=>{
-          e.dataTransfer.setData("task",JSON.stringify({
-            text:task.text,
-            day:day,
-            hour:hour
-          }));
-        };
-
-        cell.appendChild(div);
-      }
-
-      row.appendChild(cell);
-    });
-
-    table.appendChild(row);
-  });
-
-  calendar.appendChild(table);
+function deleteTask(id) {
+  tasks = tasks.filter(t => t.id !== id);
+  saveAll();
+  renderTasks();
 }
 
-/* ========= DOCUMENTOS ========= */
-createDocBtn.onclick=()=>{
-  const name=newDocInput.value.trim();
+/* =====================
+   NOTAS CON PÁGINAS
+===================== */
+createNote.onclick = () => {
+
+  const name = newNoteName.value.trim();
   if(!name) return;
 
-  documents[name]="";
+  notes[name] = {
+    pages: [""]
+  };
+
   saveAll();
-  renderDocs();
-  newDocInput.value="";
+  renderNotes();
+  newNoteName.value = "";
 };
 
-function renderDocs(){
-  docList.innerHTML="";
-  Object.keys(documents).forEach(name=>{
-    const div=document.createElement("div");
-    div.className="folder";
-    div.textContent=name;
+function renderNotes() {
+  notesList.innerHTML = "";
 
-    div.onclick=()=>{
-      currentDoc=name;
-      documentSection.style.display="block";
-      docTitle.textContent=name;
-      docEditor.innerHTML=documents[name];
-    };
+  Object.keys(notes).forEach(name => {
 
-    docList.appendChild(div);
+    const div = document.createElement("div");
+    div.className = "note-box";
+    div.textContent = name;
+
+    div.onclick = () => openNote(name);
+
+    notesList.appendChild(div);
   });
 }
 
-docEditor.addEventListener("input",()=>{
-  if(currentDoc){
-    documents[currentDoc]=docEditor.innerHTML;
+function openNote(name) {
+  currentNote = name;
+  currentPage = 0;
+
+  noteSection.style.display = "block";
+  noteTitle.textContent = name;
+
+  renderPages();
+  loadPage();
+}
+
+function renderPages() {
+  pagesBar.innerHTML = "";
+
+  notes[currentNote].pages.forEach((_, index) => {
+
+    const btn = document.createElement("div");
+    btn.className = "page-btn";
+    btn.textContent = "Página " + (index + 1);
+
+    btn.onclick = () => {
+      currentPage = index;
+      loadPage();
+    };
+
+    pagesBar.appendChild(btn);
+  });
+}
+
+function loadPage() {
+  editor.innerHTML = notes[currentNote].pages[currentPage];
+}
+
+addPage.onclick = () => {
+
+  notes[currentNote].pages.push("");
+  currentPage = notes[currentNote].pages.length - 1;
+
+  saveAll();
+  renderPages();
+  loadPage();
+};
+
+editor.addEventListener("input", () => {
+  if(currentNote !== null) {
+    notes[currentNote].pages[currentPage] = editor.innerHTML;
     saveAll();
   }
 });
 
 renderTasks();
-renderDocs();
+renderNotes();
