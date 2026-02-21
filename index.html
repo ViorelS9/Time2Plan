@@ -6,8 +6,9 @@
 
 <style>
 body { font-family: Arial; margin:20px; }
-
 section { margin-bottom:40px; }
+
+label { font-weight:bold; margin-top:8px; }
 
 input, select, textarea, button {
   display:block;
@@ -31,6 +32,11 @@ th, td {
   color:white;
   font-size:12px;
   cursor:grab;
+}
+
+.completed {
+  text-decoration: line-through;
+  color:gray;
 }
 
 .note-folder {
@@ -62,12 +68,22 @@ th, td {
 <section>
 <h2>Crear Tarea</h2>
 
-<input id="tTitle" placeholder="Título">
-<textarea id="tDesc" placeholder="Descripción"></textarea>
-<input type="date" id="tDate">
-<input type="number" id="tDays" placeholder="Días necesarios" min="1" value="1">
-<input type="number" id="tHours" placeholder="Horas por día" min="1" value="1">
+<label>Título de la tarea</label>
+<input id="tTitle">
 
+<label>Descripción</label>
+<textarea id="tDesc"></textarea>
+
+<label>Fecha límite</label>
+<input type="date" id="tDate">
+
+<label>Días necesarios para completarla</label>
+<input type="number" id="tDays" min="1" value="1">
+
+<label>Horas que trabajarás por día</label>
+<input type="number" id="tHours" min="1" value="1">
+
+<label>Tipo de tarea</label>
 <select id="tType">
   <option value="Escolar">Escolar</option>
   <option value="Personal">Personal</option>
@@ -81,8 +97,13 @@ th, td {
 <section>
 <h2>Crear Horario</h2>
 
-<input id="blockedDays" placeholder="Días ocupados (ej: Martes,Jueves)">
+<label>Días ocupados (ej: Martes,Jueves)</label>
+<input id="blockedDays">
+
+<label>Hora de inicio</label>
 <input type="number" id="startHour" value="13">
+
+<label>Hora de fin</label>
 <input type="number" id="endHour" value="18">
 
 <button id="btnGenerateSchedule">Generar horario</button>
@@ -93,7 +114,9 @@ th, td {
 <section>
 <h2>Notas</h2>
 
-<input id="folderName" placeholder="Nombre carpeta">
+<label>Nombre de la carpeta</label>
+<input id="folderName">
+
 <button id="btnCreateFolder">Crear carpeta</button>
 
 <div id="folders"></div>
