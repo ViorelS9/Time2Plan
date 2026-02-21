@@ -2,14 +2,18 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Planificador Pro Final</title>
+<title>Planificador Final Estable</title>
 
 <style>
 body { font-family: Arial; margin:20px; }
 
-input, select, textarea, button {
+input, select, button {
   margin:5px 0;
   display:block;
+}
+
+label {
+  font-size:14px;
 }
 
 table {
@@ -30,16 +34,6 @@ th, td {
   color:white;
   font-size:12px;
   cursor:grab;
-}
-
-.completed { text-decoration: line-through; }
-
-#scheduleConfig {
-  display:none;
-  border:1px solid #aaa;
-  padding:10px;
-  margin-top:10px;
-  background:#f5f5f5;
 }
 
 .folder {
@@ -63,18 +57,26 @@ th, td {
 
 <h2>Gestor de tareas</h2>
 
-<input id="taskInput" placeholder="Título">
+<label>Título</label>
+<input id="taskInput">
+
+<label>Fecha límite</label>
 <input type="date" id="dateInput">
 
-<input type="number" id="hoursPerDayInput" min="1" max="6" value="1">
+<label>Horas por día (¿cuántas horas trabajarás cada día?)</label>
+<input type="number" id="hoursPerDayInput" min="1" max="8" value="1">
+
+<label>Duración en días (¿cuántos días necesitas?)</label>
 <input type="number" id="durationDaysInput" min="1" value="1">
 
+<label>Complejidad</label>
 <select id="complexityInput">
   <option>Baja</option>
   <option>Media</option>
   <option>Alta</option>
 </select>
 
+<label>Tipo</label>
 <select id="typeInput">
   <option>Escolar</option>
   <option>Personal</option>
@@ -88,10 +90,16 @@ th, td {
 
 <button id="generateScheduleBtn">Generar horario</button>
 
-<div id="scheduleConfig">
-  <input id="blockedDaysInput" placeholder="Días ocupados (Martes,Jueves)">
+<div id="scheduleConfig" style="display:none;">
+  <label>Días ocupados (ej: Martes,Jueves)</label>
+  <input id="blockedDaysInput">
+
+  <label>Hora inicio</label>
   <input type="number" id="startHourInput" value="13">
+
+  <label>Hora fin</label>
   <input type="number" id="endHourInput" value="18">
+
   <button id="confirmScheduleBtn">Confirmar</button>
 </div>
 
@@ -100,12 +108,12 @@ th, td {
 
 <hr>
 
-<h2>Notas</h2>
+<h2>Documentos</h2>
 
-<input id="folderInput" placeholder="Nueva hoja">
-<button id="addFolderBtn">Crear hoja</button>
+<input id="newDocInput" placeholder="Nombre del documento">
+<button id="createDocBtn">Crear documento</button>
 
-<div id="folders"></div>
+<div id="docList"></div>
 
 <div id="documentSection" style="display:none;">
   <h3 id="docTitle"></h3>
