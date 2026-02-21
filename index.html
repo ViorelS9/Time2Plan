@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Planificador Completo</title>
+<title>Planificador Completo Estable</title>
 
 <style>
 body { font-family: Arial; margin:20px; }
@@ -12,10 +12,7 @@ input, select, textarea, button {
   display:block;
 }
 
-textarea {
-  width:300px;
-  height:60px;
-}
+textarea { width:300px; height:60px; }
 
 table {
   border-collapse: collapse;
@@ -91,23 +88,40 @@ th, td {
   <option>Personal</option>
 </select>
 
-<button id="addTask">Agregar tarea</button>
+<button id="addTaskBtn">Agregar tarea</button>
 
 <ul id="taskList"></ul>
+
+<hr>
+
+<h2>Horario</h2>
+
+<button id="generateScheduleBtn">Generar horario</button>
+
+<label>Días ocupados (ej: Martes,Jueves)</label>
+<input id="blockedDays">
+
+<label>Hora inicio</label>
+<input type="number" id="startHour" value="13">
+
+<label>Hora fin</label>
+<input type="number" id="endHour" value="18">
+
+<div id="calendar"></div>
 
 <hr>
 
 <h2>Notas</h2>
 
 <input id="newNoteName" placeholder="Nombre de nota">
-<button id="createNote">Crear nota</button>
+<button id="createNoteBtn">Crear nota</button>
 
 <div id="notesList"></div>
 
 <div id="noteSection" style="display:none;">
   <h3 id="noteTitle"></h3>
 
-  <button id="addPage">Agregar página</button>
+  <button id="addPageBtn">Agregar página</button>
   <div id="pagesBar"></div>
 
   <div id="editor" contenteditable="true"></div>
