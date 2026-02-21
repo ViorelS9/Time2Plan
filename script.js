@@ -1,96 +1,87 @@
+document.addEventListener("DOMContentLoaded", function(){
+
 const weekDays=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
 
 let tasks=JSON.parse(localStorage.getItem("tasks"))||[];
+let schedule=JSON.parse(localStorage.getItem("schedule"))||null;
 let notes=JSON.parse(localStorage.getItem("notes"))||{};
-let schedule=null;
-let hoursRange=[];
 
-let currentNote=null;
+let currentFolder=null;
 let currentPage=0;
 
-/* ========= GUARDAR ========= */
+/* ================= SAVE ================= */
 function saveAll(){
   localStorage.setItem("tasks",JSON.stringify(tasks));
+  localStorage.setItem("schedule",JSON.stringify(schedule));
   localStorage.setItem("notes",JSON.stringify(notes));
 }
 
-/* ========= TAREAS ========= */
-document.getElementById("addTaskBtn").onclick=()=>{
-  if(!taskTitle.value || !taskDate.value) return;
+/* ================= TAREAS ================= */
+document.getElementById("btnAddTask").addEventListener("click",function(){
+
+  const title=document.getElementById("tTitle").value;
+  const desc=document.getElementById("tDesc").value;
+  const date=document.getElementById("tDate").value;
+  const days=parseInt(document.getElementById("tDays").value);
+  const hours=parseInt(document.getElementById("tHours").value);
+  const type=document.getElementById("tType").value;
+
+  if(!title || !date) return alert("Faltan datos");
 
   tasks.push({
     id:Date.now(),
-    title:taskTitle.value,
-    desc:taskDesc.value,
-    date:taskDate.value,
-    hours:parseInt(taskHours.value),
-    days:parseInt(taskDays.value),
-    complexity:taskComplexity.value,
-    type:taskType.value,
-    done:false
+    title,desc,date,days,hours,type
   });
 
   saveAll();
   renderTasks();
-};
+});
 
 function renderTasks(){
-  taskList.innerHTML="";
+  const list=document.getElementById("taskList");
+  list.innerHTML="";
   tasks.forEach(t=>{
     const li=document.createElement("li");
-    if(t.done) li.classList.add("completed");
-
-    li.innerHTML=`
-      <strong>${t.title}</strong><br>
-      ${t.desc}<br>
-      Fecha: ${t.date}<br>
-      <button onclick="toggleDone(${t.id})">✔</button>
-      <button onclick="deleteTask(${t.id})">🗑</button>
-    `;
-
-    taskList.appendChild(li);
+    li.textContent=t.title+" ("+t.type+")";
+    list.appendChild(li);
   });
 }
 
-function toggleDone(id){
-  tasks=tasks.map(t=>t.id===id?{...t,done:!t.done}:t);
-  saveAll();
-  renderTasks();
+/* ================= PRIORIDAD IA ================= */
+function priorityScore(task){
+  const daysLeft=(new Date(task.date)-new Date())/(1000*60*60*24);
+  let score=100-daysLeft;
+  if(task.type==="Escolar") score+=20;
+  return score;
 }
 
-function deleteTask(id){
-  tasks=tasks.filter(t=>t.id!==id);
-  saveAll();
-  renderTasks();
-}
+/* ================= HORARIO ================= */
+document.getElementById("btnGenerateSchedule").addEventListener("click",function(){
 
-/* ========= HORARIO ========= */
-document.getElementById("generateScheduleBtn").onclick=generateSchedule;
+  const blockedInput=document.getElementById("blockedDays").value.toLowerCase();
+  const start=parseInt(document.getElementById("startHour").value);
+  const end=parseInt(document.getElementById("endHour").value);
 
-function generateSchedule(){
-
-  const blockedInput=blockedDays.value.toLowerCase();
-  const start=parseInt(startHour.value);
-  const end=parseInt(endHour.value);
-
-  hoursRange=[];
-  for(let h=start;h<end;h++) hoursRange.push(h+":00");
+  let hours=[];
+  for(let h=start;h<end;h++) hours.push(h+":00");
 
   schedule={};
   weekDays.forEach(d=>{
     schedule[d]={};
-    hoursRange.forEach(h=>schedule[d][h]=null);
+    hours.forEach(h=>schedule[d][h]=null);
   });
+
+  let sorted=[...tasks].sort((a,b)=>priorityScore(b)-priorityScore(a));
 
   let dayIndex=0;
 
-  tasks.filter(t=>!t.done).forEach(task=>{
+  sorted.forEach(task=>{
     let assigned=0;
     while(assigned<task.days && dayIndex<7){
       let day=weekDays[dayIndex];
       if(!blockedInput.includes(day.toLowerCase())){
-        for(let i=0;i<task.hours && i<hoursRange.length;i++){
-          schedule[day][hoursRange[i]]={title:task.title};
+        for(let i=0;i<task.hours && i<hours.length;i++){
+          schedule[day][hours[i]]={title:task.title};
         }
         assigned++;
       }
@@ -98,11 +89,14 @@ function generateSchedule(){
     }
   });
 
-  renderCalendar();
-}
+  saveAll();
+  renderCalendar(hours);
+});
 
-function renderCalendar(){
-  calendar.innerHTML="";
+function renderCalendar(hours){
+
+  const cal=document.getElementById("calendar");
+  cal.innerHTML="";
   const table=document.createElement("table");
 
   const header=document.createElement("tr");
@@ -114,7 +108,7 @@ function renderCalendar(){
   });
   table.appendChild(header);
 
-  hoursRange.forEach(hour=>{
+  hours.forEach(hour=>{
     const row=document.createElement("tr");
     const hourCell=document.createElement("td");
     hourCell.textContent=hour;
@@ -126,10 +120,11 @@ function renderCalendar(){
 
       cell.ondrop=e=>{
         e.preventDefault();
-        const data=JSON.parse(e.dataTransfer.getData("task"));
+        const data=JSON.parse(e.dataTransfer.getData("text"));
         schedule[data.day][data.hour]=null;
         schedule[day][hour]={title:data.title};
-        renderCalendar();
+        saveAll();
+        renderCalendar(hours);
       };
 
       const task=schedule[day][hour];
@@ -140,7 +135,7 @@ function renderCalendar(){
         div.draggable=true;
 
         div.ondragstart=e=>{
-          e.dataTransfer.setData("task",JSON.stringify({
+          e.dataTransfer.setData("text",JSON.stringify({
             title:task.title,
             day:day,
             hour:hour
@@ -156,69 +151,84 @@ function renderCalendar(){
     table.appendChild(row);
   });
 
-  calendar.appendChild(table);
+  cal.appendChild(table);
 }
 
-/* ========= NOTAS ========= */
-document.getElementById("createNoteBtn").onclick=()=>{
-  const name=newNoteName.value.trim();
+/* ================= NOTAS ================= */
+document.getElementById("btnCreateFolder").addEventListener("click",function(){
+
+  const name=document.getElementById("folderName").value;
   if(!name) return;
 
   notes[name]={pages:[""]};
   saveAll();
-  renderNotes();
-  newNoteName.value="";
-};
+  renderFolders();
+});
 
-function renderNotes(){
-  notesList.innerHTML="";
+function renderFolders(){
+  const container=document.getElementById("folders");
+  container.innerHTML="";
   Object.keys(notes).forEach(name=>{
     const div=document.createElement("div");
-    div.className="note-box";
+    div.className="note-folder";
     div.textContent=name;
-    div.onclick=()=>openNote(name);
-    notesList.appendChild(div);
+    div.onclick=()=>openFolder(name);
+    container.appendChild(div);
   });
 }
 
-function openNote(name){
-  currentNote=name;
+function openFolder(name){
+  currentFolder=name;
   currentPage=0;
-  noteSection.style.display="block";
-  noteTitle.textContent=name;
+  document.getElementById("noteArea").style.display="block";
+  document.getElementById("folderTitle").textContent=name;
   renderPages();
   loadPage();
 }
 
 function renderPages(){
-  pagesBar.innerHTML="";
-  notes[currentNote].pages.forEach((_,i)=>{
+  const bar=document.getElementById("pagesBar");
+  bar.innerHTML="";
+  notes[currentFolder].pages.forEach((_,i)=>{
     const btn=document.createElement("div");
     btn.className="page-btn";
     btn.textContent="Página "+(i+1);
     btn.onclick=()=>{currentPage=i;loadPage();};
-    pagesBar.appendChild(btn);
+    bar.appendChild(btn);
   });
 }
 
 function loadPage(){
-  editor.innerHTML=notes[currentNote].pages[currentPage];
+  document.getElementById("editor").innerHTML=
+    notes[currentFolder].pages[currentPage];
 }
 
-document.getElementById("addPageBtn").onclick=()=>{
-  notes[currentNote].pages.push("");
-  currentPage=notes[currentNote].pages.length-1;
+document.getElementById("btnAddPage").addEventListener("click",function(){
+  notes[currentFolder].pages.push("");
+  currentPage=notes[currentFolder].pages.length-1;
   saveAll();
   renderPages();
   loadPage();
-};
+});
 
-editor.addEventListener("input",()=>{
-  if(currentNote!==null){
-    notes[currentNote].pages[currentPage]=editor.innerHTML;
+document.getElementById("editor").addEventListener("input",function(){
+  if(currentFolder!==null){
+    notes[currentFolder].pages[currentPage]=this.innerHTML;
     saveAll();
   }
 });
 
+document.getElementById("imageUpload").addEventListener("change",function(e){
+  const file=e.target.files[0];
+  const reader=new FileReader();
+  reader.onload=function(){
+    document.getElementById("editor").innerHTML+=
+      "<img src='"+reader.result+"' width='200'><br>";
+  };
+  if(file) reader.readAsDataURL(file);
+});
+
 renderTasks();
-renderNotes();
+renderFolders();
+
+});
