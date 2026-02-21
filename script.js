@@ -1,272 +1,262 @@
-document.addEventListener("DOMContentLoaded", function(){
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+let notes = JSON.parse(localStorage.getItem("notes")) || {};
+let schedule = JSON.parse(localStorage.getItem("schedule")) || null;
+
+let currentNote = null;
+let currentPage = 0;
 
 const weekDays=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
 
-let tasks=JSON.parse(localStorage.getItem("tasks"))||[];
-let schedule=JSON.parse(localStorage.getItem("schedule"))||null;
-let notes=JSON.parse(localStorage.getItem("notes"))||{};
-
-let currentFolder=null;
-let currentPage=0;
-
-/* ================= SAVE ================= */
 function saveAll(){
-  localStorage.setItem("tasks",JSON.stringify(tasks));
-  localStorage.setItem("schedule",JSON.stringify(schedule));
-  localStorage.setItem("notes",JSON.stringify(notes));
+localStorage.setItem("tasks",JSON.stringify(tasks));
+localStorage.setItem("notes",JSON.stringify(notes));
+localStorage.setItem("schedule",JSON.stringify(schedule));
 }
 
-/* ================= TAREAS ================= */
-document.getElementById("btnAddTask").addEventListener("click",function(){
+/* -------- NAVIGATION -------- */
 
-  const title=document.getElementById("tTitle").value;
-  const desc=document.getElementById("tDesc").value;
-  const date=document.getElementById("tDate").value;
-  const days=parseInt(document.getElementById("tDays").value);
-  const hours=parseInt(document.getElementById("tHours").value);
-  const type=document.getElementById("tType").value;
-  const difficulty=document.getElementById("tDifficulty").value;
+function openSection(id){
+document.querySelectorAll("section").forEach(s=>s.style.display="none");
+document.getElementById(id).style.display="block";
+}
 
-  if(!title || !date) return alert("Faltan datos");
+function goHome(){
+openSection("home");
+renderNotifications();
+}
 
-  tasks.push({
-    id:Date.now(),
-    title,desc,date,days,hours,type,difficulty,
-    completed:false,
-    showDesc:false
-  });
+openSection("home");
 
-  saveAll();
-  renderTasks();
+/* -------- NOTIFICATIONS -------- */
+
+function renderNotifications(){
+let box=document.getElementById("notificationsBox");
+box.innerHTML="<strong>NOTIFICACIONES</strong><br>";
+
+tasks.forEach(t=>{
+let daysLeft=(new Date(t.date)-new Date())/(1000*60*60*24);
+if(daysLeft<=2 && !t.completed){
+box.innerHTML+="Tarea '"+t.title+"' es urgente<br>";
+}
 });
+}
+
+/* -------- TASKS -------- */
+
+function showAddTask(){
+document.getElementById("addTaskForm").style.display="block";
+}
+
+function addTask(){
+let t={
+id:Date.now(),
+title:tTitle.value,
+desc:tDesc.value,
+date:tDate.value,
+days:parseInt(tDays.value),
+hours:parseInt(tHours.value),
+type:tType.value,
+difficulty:tDifficulty.value,
+completed:false,
+show:false
+};
+tasks.push(t);
+saveAll();
+renderTasks();
+document.getElementById("addTaskForm").style.display="none";
+}
 
 function renderTasks(){
-  const list=document.getElementById("taskList");
-  list.innerHTML="";
+let list=document.getElementById("taskList");
+list.innerHTML="";
+tasks.forEach(t=>{
+let li=document.createElement("li");
+if(t.completed) li.classList.add("completed");
 
-  tasks.forEach(t=>{
-    const li=document.createElement("li");
+li.innerHTML=`
+${t.title} - ${t.date}
+<button onclick="toggleTask(${t.id})">Completar</button>
+<button onclick="deleteTask(${t.id})">Eliminar</button>
+`;
 
-    if(t.completed) li.classList.add("completed");
+li.onclick=()=>{
+t.show=!t.show;
+renderTasks();
+};
 
-    li.innerHTML=`
-      <strong>${t.title}</strong> 
-      (${t.type} - ${t.difficulty})
-      <br>
-      <button onclick="toggleComplete(${t.id})">✔ Completar</button>
-      <button onclick="toggleDesc(${t.id})">📄 Ver descripción</button>
-      <button onclick="deleteTask(${t.id})">🗑 Eliminar</button>
-      ${t.showDesc ? `<p>${t.desc}</p>` : ""}
-    `;
-
-    list.appendChild(li);
-  });
+if(t.show){
+let p=document.createElement("p");
+p.textContent=t.desc;
+li.appendChild(p);
 }
 
-window.toggleComplete=function(id){
-  tasks=tasks.map(t=>t.id===id?{...t,completed:!t.completed}:t);
-  saveAll();
-  renderTasks();
-}
-
-window.toggleDesc=function(id){
-  tasks=tasks.map(t=>t.id===id?{...t,showDesc:!t.showDesc}:t);
-  renderTasks();
-}
-
-window.deleteTask=function(id){
-  tasks=tasks.filter(t=>t.id!==id);
-  saveAll();
-  renderTasks();
-}
-
-/* ================= PRIORIDAD IA ================= */
-function priorityScore(task){
-  const daysLeft=(new Date(task.date)-new Date())/(1000*60*60*24);
-  let score=100-daysLeft;
-
-  if(task.type==="Escolar") score+=20;
-
-  if(task.difficulty==="Alta") score+=15;
-  if(task.difficulty==="Media") score+=8;
-
-  return score;
-}
-
-/* ================= HORARIO ================= */
-document.getElementById("btnGenerateSchedule").addEventListener("click",function(){
-
-  const blockedInput=document.getElementById("blockedDays").value.toLowerCase();
-  const start=parseInt(document.getElementById("startHour").value);
-  const end=parseInt(document.getElementById("endHour").value);
-
-  let hours=[];
-  for(let h=start;h<end;h++) hours.push(h+":00");
-
-  schedule={};
-  weekDays.forEach(d=>{
-    schedule[d]={};
-    hours.forEach(h=>schedule[d][h]=null);
-  });
-
-  let sorted=[...tasks]
-    .filter(t=>!t.completed)
-    .sort((a,b)=>priorityScore(b)-priorityScore(a));
-
-  let dayIndex=0;
-
-  sorted.forEach(task=>{
-    let assigned=0;
-    while(assigned<task.days && dayIndex<7){
-      let day=weekDays[dayIndex];
-      if(!blockedInput.includes(day.toLowerCase())){
-        for(let i=0;i<task.hours && i<hours.length;i++){
-          schedule[day][hours[i]]={title:task.title};
-        }
-        assigned++;
-      }
-      dayIndex++;
-    }
-  });
-
-  saveAll();
-  renderCalendar(hours);
+list.appendChild(li);
 });
+}
+
+function toggleTask(id){
+tasks=tasks.map(t=>t.id===id?{...t,completed:!t.completed}:t);
+saveAll();
+renderTasks();
+}
+
+function deleteTask(id){
+tasks=tasks.filter(t=>t.id!==id);
+saveAll();
+renderTasks();
+}
+
+/* -------- SCHEDULE -------- */
+
+function showCreateSchedule(){
+document.getElementById("createScheduleForm").style.display="block";
+}
+
+function generateSchedule(){
+let blocked=document.getElementById("blockedDays").value.toLowerCase();
+let start=parseInt(startHour.value);
+let end=parseInt(endHour.value);
+
+let hours=[];
+for(let h=start;h<end;h++) hours.push(h+":00");
+
+schedule={};
+weekDays.forEach(d=>{
+schedule[d]={};
+hours.forEach(h=>schedule[d][h]=null);
+});
+
+tasks.filter(t=>!t.completed).forEach((t,i)=>{
+let day=weekDays[i%7];
+if(!blocked.includes(day.toLowerCase())){
+schedule[day][hours[0]]={title:t.title};
+}
+});
+
+saveAll();
+renderCalendar(hours);
+}
 
 function renderCalendar(hours){
+let cal=document.getElementById("calendar");
+cal.innerHTML="";
+let table=document.createElement("table");
 
-  const cal=document.getElementById("calendar");
-  cal.innerHTML="";
-  const table=document.createElement("table");
+let header=document.createElement("tr");
+header.appendChild(document.createElement("th"));
+weekDays.forEach(d=>{
+let th=document.createElement("th");
+th.textContent=d;
+header.appendChild(th);
+});
+table.appendChild(header);
 
-  const header=document.createElement("tr");
-  header.appendChild(document.createElement("th"));
-  weekDays.forEach(d=>{
-    const th=document.createElement("th");
-    th.textContent=d;
-    header.appendChild(th);
-  });
-  table.appendChild(header);
+hours.forEach(hour=>{
+let row=document.createElement("tr");
+let hCell=document.createElement("td");
+hCell.textContent=hour;
+row.appendChild(hCell);
 
-  hours.forEach(hour=>{
-    const row=document.createElement("tr");
-    const hourCell=document.createElement("td");
-    hourCell.textContent=hour;
-    row.appendChild(hourCell);
-
-    weekDays.forEach(day=>{
-      const cell=document.createElement("td");
-      cell.ondragover=e=>e.preventDefault();
-
-      cell.ondrop=e=>{
-        e.preventDefault();
-        const data=JSON.parse(e.dataTransfer.getData("text"));
-        schedule[data.day][data.hour]=null;
-        schedule[day][hour]={title:data.title};
-        saveAll();
-        renderCalendar(hours);
-      };
-
-      const task=schedule[day][hour];
-      if(task){
-        const div=document.createElement("div");
-        div.className="task-block";
-        div.textContent=task.title;
-        div.draggable=true;
-
-        div.ondragstart=e=>{
-          e.dataTransfer.setData("text",JSON.stringify({
-            title:task.title,
-            day:day,
-            hour:hour
-          }));
-        };
-
-        cell.appendChild(div);
-      }
-
-      row.appendChild(cell);
-    });
-
-    table.appendChild(row);
-  });
-
-  cal.appendChild(table);
+weekDays.forEach(day=>{
+let cell=document.createElement("td");
+let task=schedule[day][hour];
+if(task){
+let div=document.createElement("div");
+div.className="task-block";
+div.textContent=task.title;
+cell.appendChild(div);
 }
-
-/* ================= NOTAS ================= */
-document.getElementById("btnCreateFolder").addEventListener("click",function(){
-  const name=document.getElementById("folderName").value;
-  if(!name) return;
-  notes[name]={pages:[""]};
-  saveAll();
-  renderFolders();
+row.appendChild(cell);
+});
+table.appendChild(row);
 });
 
-function renderFolders(){
-  const container=document.getElementById("folders");
-  container.innerHTML="";
-  Object.keys(notes).forEach(name=>{
-    const div=document.createElement("div");
-    div.className="note-folder";
-    div.textContent=name;
-    div.onclick=()=>openFolder(name);
-    container.appendChild(div);
-  });
+cal.appendChild(table);
 }
 
-function openFolder(name){
-  currentFolder=name;
-  currentPage=0;
-  document.getElementById("noteArea").style.display="block";
-  document.getElementById("folderTitle").textContent=name;
-  renderPages();
-  loadPage();
+/* -------- NOTES -------- */
+
+function createNote(){
+let name=prompt("Titulo de la nota");
+if(!name) return;
+notes[name]={pages:[""]};
+saveAll();
+renderNotes();
+}
+
+function renderNotes(){
+let container=document.getElementById("notesList");
+container.innerHTML="";
+Object.keys(notes).forEach(n=>{
+let div=document.createElement("div");
+div.className="note-card";
+div.textContent=n;
+div.onclick=()=>openNote(n);
+container.appendChild(div);
+});
+}
+
+function openNote(name){
+currentNote=name;
+currentPage=0;
+document.getElementById("noteEditor").style.display="block";
+noteTitle.textContent=name;
+renderPages();
+loadPage();
+}
+
+function deleteNote(){
+delete notes[currentNote];
+currentNote=null;
+saveAll();
+document.getElementById("noteEditor").style.display="none";
+renderNotes();
 }
 
 function renderPages(){
-  const bar=document.getElementById("pagesBar");
-  bar.innerHTML="";
-  notes[currentFolder].pages.forEach((_,i)=>{
-    const btn=document.createElement("div");
-    btn.className="page-btn";
-    btn.textContent="Página "+(i+1);
-    btn.onclick=()=>{currentPage=i;loadPage();};
-    bar.appendChild(btn);
-  });
+let p=document.getElementById("pages");
+p.innerHTML="";
+notes[currentNote].pages.forEach((_,i)=>{
+let btn=document.createElement("button");
+btn.textContent="Pagina "+(i+1);
+btn.onclick=()=>{currentPage=i;loadPage();}
+p.appendChild(btn);
+});
 }
 
 function loadPage(){
-  document.getElementById("editor").innerHTML=
-    notes[currentFolder].pages[currentPage];
+editor.innerHTML=notes[currentNote].pages[currentPage];
 }
 
-document.getElementById("btnAddPage").addEventListener("click",function(){
-  notes[currentFolder].pages.push("");
-  currentPage=notes[currentFolder].pages.length-1;
-  saveAll();
-  renderPages();
-  loadPage();
+editor.addEventListener("input",()=>{
+if(currentNote){
+notes[currentNote].pages[currentPage]=editor.innerHTML;
+saveAll();
+}
 });
 
-document.getElementById("editor").addEventListener("input",function(){
-  if(currentFolder!==null){
-    notes[currentFolder].pages[currentPage]=this.innerHTML;
-    saveAll();
-  }
+function addPage(){
+notes[currentNote].pages.push("");
+currentPage=notes[currentNote].pages.length-1;
+saveAll();
+renderPages();
+loadPage();
+}
+
+function addImage(){
+imgInput.click();
+}
+
+imgInput.addEventListener("change",function(e){
+let file=e.target.files[0];
+let reader=new FileReader();
+reader.onload=function(){
+editor.innerHTML+="<img src='"+reader.result+"' width='200'><br>";
+};
+reader.readAsDataURL(file);
 });
 
-document.getElementById("imageUpload").addEventListener("change",function(e){
-  const file=e.target.files[0];
-  const reader=new FileReader();
-  reader.onload=function(){
-    document.getElementById("editor").innerHTML+=
-      "<img src='"+reader.result+"' width='200'><br>";
-  };
-  if(file) reader.readAsDataURL(file);
-});
-
+/* INIT */
 renderTasks();
-renderFolders();
-
-});
+renderNotes();
+renderNotifications();
