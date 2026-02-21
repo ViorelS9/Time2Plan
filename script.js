@@ -30,7 +30,8 @@ document.getElementById("btnAddTask").addEventListener("click",function(){
 
   tasks.push({
     id:Date.now(),
-    title,desc,date,days,hours,type
+    title,desc,date,days,hours,type,
+    completed:false
   });
 
   saveAll();
@@ -42,9 +43,30 @@ function renderTasks(){
   list.innerHTML="";
   tasks.forEach(t=>{
     const li=document.createElement("li");
-    li.textContent=t.title+" ("+t.type+")";
+
+    if(t.completed) li.classList.add("completed");
+
+    li.innerHTML=`
+      <strong>${t.title}</strong> (${t.type})
+      <br>
+      <button onclick="toggleComplete(${t.id})">✔ Completar</button>
+      <button onclick="deleteTask(${t.id})">🗑 Eliminar</button>
+    `;
+
     list.appendChild(li);
   });
+}
+
+window.toggleComplete=function(id){
+  tasks=tasks.map(t=>t.id===id?{...t,completed:!t.completed}:t);
+  saveAll();
+  renderTasks();
+}
+
+window.deleteTask=function(id){
+  tasks=tasks.filter(t=>t.id!==id);
+  saveAll();
+  renderTasks();
 }
 
 /* ================= PRIORIDAD IA ================= */
@@ -71,7 +93,9 @@ document.getElementById("btnGenerateSchedule").addEventListener("click",function
     hours.forEach(h=>schedule[d][h]=null);
   });
 
-  let sorted=[...tasks].sort((a,b)=>priorityScore(b)-priorityScore(a));
+  let sorted=[...tasks]
+    .filter(t=>!t.completed)
+    .sort((a,b)=>priorityScore(b)-priorityScore(a));
 
   let dayIndex=0;
 
@@ -156,10 +180,8 @@ function renderCalendar(hours){
 
 /* ================= NOTAS ================= */
 document.getElementById("btnCreateFolder").addEventListener("click",function(){
-
   const name=document.getElementById("folderName").value;
   if(!name) return;
-
   notes[name]={pages:[""]};
   saveAll();
   renderFolders();
