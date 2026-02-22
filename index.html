@@ -18,22 +18,18 @@
   <div class="grid-home">
     <div class="card" onclick="openPage('tasks')">
       <h2>TAREAS</h2>
-      <p>Organiza tus pendientes</p>
     </div>
 
     <div class="card" onclick="openPage('schedule')">
       <h2>HORARIO</h2>
-      <p>Planifica tu semana</p>
     </div>
 
     <div class="card" onclick="openPage('notes')">
       <h2>NOTAS</h2>
-      <p>Tu cuaderno digital</p>
     </div>
 
     <div class="card" onclick="openPage('notifications')">
       <h2>NOTIFICACIONES</h2>
-      <p>Consejos y alertas</p>
     </div>
   </div>
 </div>
@@ -41,8 +37,6 @@
 <!-- TAREAS -->
 <div id="tasks" class="page">
   <button class="back" onclick="goHome()">← Volver</button>
-
-  <h2>Agregar Tarea</h2>
 
   <div class="form-card">
     <label>Título</label>
@@ -55,12 +49,12 @@
     <input type="date" id="tDate">
 
     <label>Días necesarios</label>
-    <input type="number" id="tDays" min="1">
+    <input type="number" id="tDays">
 
     <label>Horas por día</label>
-    <input type="number" id="tHours" min="1">
+    <input type="number" id="tHours">
 
-    <label>Tipo de tarea</label>
+    <label>Tipo</label>
     <select id="tType">
       <option>Escolar</option>
       <option>Personal</option>
@@ -76,18 +70,15 @@
     <button onclick="addTask()">Agregar</button>
   </div>
 
-  <h2>Mis Tareas</h2>
-  <div id="taskList"></div>
+  <ul id="taskList"></ul>
 </div>
 
 <!-- HORARIO -->
 <div id="schedule" class="page">
   <button class="back" onclick="goHome()">← Volver</button>
 
-  <h2>Crear Horario</h2>
-
-  <div id="createScheduleForm" class="form-card">
-    <label>Días ocupados (ej: martes,jueves)</label>
+  <div class="form-card">
+    <label>Días ocupados</label>
     <input id="blockedDays">
 
     <label>Hora inicio</label>
@@ -106,17 +97,10 @@
 <div id="notes" class="page">
   <button class="back" onclick="goHome()">← Volver</button>
 
-  <h2>Carpetas</h2>
+  <button onclick="createNote()">Crear Nota</button>
 
-  <div class="form-card">
-    <label>Nombre de carpeta</label>
-    <input id="folderName">
-    <button onclick="createFolder()">Crear Carpeta</button>
-  </div>
+  <div id="notesList"></div>
 
-  <div id="folders"></div>
-
-  <!-- EDITOR DE NOTA -->
   <div id="noteEditor" style="display:none;">
     <h3 id="noteTitle"></h3>
 
@@ -126,7 +110,7 @@
 
     <div id="pages"></div>
 
-    <div contenteditable="true" id="editor"></div>
+    <div id="editor" contenteditable="true"></div>
 
     <input type="file" id="imgInput" style="display:none;">
   </div>
@@ -135,8 +119,6 @@
 <!-- NOTIFICACIONES -->
 <div id="notifications" class="page">
   <button class="back" onclick="goHome()">← Volver</button>
-
-  <h2>Notificaciones</h2>
   <div id="notificationsBox"></div>
 </div>
 
