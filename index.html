@@ -4,30 +4,36 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Time2Plan</title>
-
 <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
 <header>
   <h1 onclick="goHome()">Time2Plan</h1>
 </header>
 
+<!-- HOME -->
 <div id="home" class="page active">
   <div class="grid-home">
     <div class="card" onclick="openPage('tasks')">
-      <h2>Tareas</h2>
-      <p>Organiza tu trabajo</p>
+      <h2>TAREAS</h2>
+      <p>Organiza tus pendientes</p>
     </div>
 
     <div class="card" onclick="openPage('schedule')">
-      <h2>Horario</h2>
-      <p>Plan semanal inteligente</p>
+      <h2>HORARIO</h2>
+      <p>Planifica tu semana</p>
     </div>
 
     <div class="card" onclick="openPage('notes')">
-      <h2>Notas</h2>
-      <p>Cuaderno digital</p>
+      <h2>NOTAS</h2>
+      <p>Tu cuaderno digital</p>
+    </div>
+
+    <div class="card" onclick="openPage('notifications')">
+      <h2>NOTIFICACIONES</h2>
+      <p>Consejos y alertas</p>
     </div>
   </div>
 </div>
@@ -35,38 +41,39 @@
 <!-- TAREAS -->
 <div id="tasks" class="page">
   <button class="back" onclick="goHome()">← Volver</button>
-  <h2>Crear Nueva Tarea</h2>
+
+  <h2>Agregar Tarea</h2>
 
   <div class="form-card">
     <label>Título</label>
-    <input id="taskTitle">
+    <input id="tTitle">
 
     <label>Descripción</label>
-    <textarea id="taskDescription"></textarea>
+    <textarea id="tDesc"></textarea>
 
     <label>Fecha límite</label>
-    <input type="date" id="taskDate">
+    <input type="date" id="tDate">
 
     <label>Días necesarios</label>
-    <input type="number" id="taskDays" min="1">
+    <input type="number" id="tDays" min="1">
 
     <label>Horas por día</label>
-    <input type="number" id="taskHours" min="1">
+    <input type="number" id="tHours" min="1">
 
-    <label>Tipo</label>
-    <select id="taskType">
-      <option value="escolar">Escolar</option>
-      <option value="personal">Personal</option>
+    <label>Tipo de tarea</label>
+    <select id="tType">
+      <option>Escolar</option>
+      <option>Personal</option>
     </select>
 
     <label>Dificultad</label>
-    <select id="taskDifficulty">
-      <option value="alta">Alta</option>
-      <option value="media">Media</option>
-      <option value="baja">Baja</option>
+    <select id="tDifficulty">
+      <option>Alta</option>
+      <option>Media</option>
+      <option>Baja</option>
     </select>
 
-    <button onclick="addTask()">Agregar Tarea</button>
+    <button onclick="addTask()">Agregar</button>
   </div>
 
   <h2>Mis Tareas</h2>
@@ -76,16 +83,17 @@
 <!-- HORARIO -->
 <div id="schedule" class="page">
   <button class="back" onclick="goHome()">← Volver</button>
-  <h2>Generar Horario</h2>
 
-  <div class="form-card">
+  <h2>Crear Horario</h2>
+
+  <div id="createScheduleForm" class="form-card">
     <label>Días ocupados (ej: martes,jueves)</label>
     <input id="blockedDays">
 
-    <label>Hora inicio (ej: 8)</label>
+    <label>Hora inicio</label>
     <input type="number" id="startHour">
 
-    <label>Hora fin (ej: 18)</label>
+    <label>Hora fin</label>
     <input type="number" id="endHour">
 
     <button onclick="generateSchedule()">Generar Horario</button>
@@ -97,17 +105,42 @@
 <!-- NOTAS -->
 <div id="notes" class="page">
   <button class="back" onclick="goHome()">← Volver</button>
+
   <h2>Carpetas</h2>
 
   <div class="form-card">
-    <label>Nombre carpeta</label>
+    <label>Nombre de carpeta</label>
     <input id="folderName">
-    <button onclick="createFolder()">Crear</button>
+    <button onclick="createFolder()">Crear Carpeta</button>
   </div>
 
   <div id="folders"></div>
+
+  <!-- EDITOR DE NOTA -->
+  <div id="noteEditor" style="display:none;">
+    <h3 id="noteTitle"></h3>
+
+    <button onclick="addPage()">Agregar Página</button>
+    <button onclick="addImage()">Agregar Imagen</button>
+    <button onclick="deleteNote()">Eliminar Nota</button>
+
+    <div id="pages"></div>
+
+    <div contenteditable="true" id="editor"></div>
+
+    <input type="file" id="imgInput" style="display:none;">
+  </div>
+</div>
+
+<!-- NOTIFICACIONES -->
+<div id="notifications" class="page">
+  <button class="back" onclick="goHome()">← Volver</button>
+
+  <h2>Notificaciones</h2>
+  <div id="notificationsBox"></div>
 </div>
 
 <script src="script.js"></script>
+
 </body>
 </html>
