@@ -13,28 +13,29 @@ localStorage.setItem("notes",JSON.stringify(notes));
 localStorage.setItem("schedule",JSON.stringify(schedule));
 }
 
-/* -------- NAVIGATION -------- */
+/* ---------- NAVEGACIÓN ---------- */
 
-function openSection(id){
-document.querySelectorAll("section").forEach(s=>{
-s.classList.remove("active");
-});
+function openPage(id){
+  document.querySelectorAll(".page").forEach(page=>{
+    page.classList.remove("active");
+  });
 
-let sec=document.getElementById(id);
-sec.style.display="block";
-
-setTimeout(()=>{
-sec.classList.add("active");
-},10);
+  const selected = document.getElementById(id);
+  if(selected){
+    selected.classList.add("active");
+  }
 }
 
 function goHome(){
-openSection("home");
-renderNotifications();
+  document.querySelectorAll(".page").forEach(page=>{
+    page.classList.remove("active");
+  });
+
+  const home = document.getElementById("home");
+  if(home){
+    home.classList.add("active");
+  }
 }
-
-openSection("home");
-
 /* -------- NOTIFICATIONS -------- */
 
 function renderNotifications(){
