@@ -1,6 +1,6 @@
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 let notes = JSON.parse(localStorage.getItem("notes")) || {};
-let schedule = JSON.parse(localStorage.getItem("schedule")) || null;
+let schedule = JSON.parse(localStorage.getItem("schedule")) || {};
 
 let currentNote = null;
 let currentPage = 0;
@@ -16,32 +16,20 @@ localStorage.setItem("schedule",JSON.stringify(schedule));
 /* ---------- NAVEGACIÓN ---------- */
 
 function openPage(id){
-  document.querySelectorAll(".page").forEach(page=>{
-    page.classList.remove("active");
-  });
-
-  const selected = document.getElementById(id);
-  if(selected){
-    selected.classList.add("active");
-  }
+document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+document.getElementById(id).classList.add("active");
 }
 
 function goHome(){
-  document.querySelectorAll(".page").forEach(page=>{
-    page.classList.remove("active");
-  });
-
-  const home = document.getElementById("home");
-  if(home){
-    home.classList.add("active");
-  }
+document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+document.getElementById("home").classList.add("active");
 }
+
 /* -------- NOTIFICATIONS -------- */
 
 function renderNotifications(){
 let box=document.getElementById("notificationsBox");
-box.innerHTML="<strong>NOTIFICACIONES</strong><br>";
-
+box.innerHTML="";
 tasks.forEach(t=>{
 let daysLeft=(new Date(t.date)-new Date())/(1000*60*60*24);
 if(daysLeft<=2 && !t.completed){
@@ -52,18 +40,14 @@ box.innerHTML+="Tarea '"+t.title+"' es urgente<br>";
 
 /* -------- TASKS -------- */
 
-function showAddTask(){
-document.getElementById("addTaskForm").style.display="block";
-}
-
 function addTask(){
 let t={
 id:Date.now(),
 title:tTitle.value,
 desc:tDesc.value,
 date:tDate.value,
-days:parseInt(tDays.value),
-hours:parseInt(tHours.value),
+days:parseInt(tDays.value)||0,
+hours:parseInt(tHours.value)||0,
 type:tType.value,
 difficulty:tDifficulty.value,
 completed:false,
@@ -72,7 +56,6 @@ show:false
 tasks.push(t);
 saveAll();
 renderTasks();
-document.getElementById("addTaskForm").style.display="none";
 }
 
 function renderTasks(){
@@ -83,9 +66,9 @@ let li=document.createElement("li");
 if(t.completed) li.classList.add("completed");
 
 li.innerHTML=`
-${t.title} - ${t.date}
-<button onclick="toggleTask(${t.id})">Completar</button>
-<button onclick="deleteTask(${t.id})">Eliminar</button>
+<strong>${t.title}</strong> - ${t.date}
+<button onclick="toggleTask(${t.id});event.stopPropagation()">Completar</button>
+<button onclick="deleteTask(${t.id});event.stopPropagation()">Eliminar</button>
 `;
 
 li.onclick=()=>{
@@ -107,26 +90,20 @@ function toggleTask(id){
 tasks=tasks.map(t=>t.id===id?{...t,completed:!t.completed}:t);
 saveAll();
 renderTasks();
+renderNotifications();
 }
 
 function deleteTask(id){
 tasks=tasks.filter(t=>t.id!==id);
 saveAll();
 renderTasks();
+renderNotifications();
 }
 
 /* -------- SCHEDULE -------- */
 
-function showCreateSchedule(){
-document.getElementById("createScheduleForm").style.display="block";
-}
-
 function generateSchedule(){
-let blocked=document.getElementById("blockedDays").value
-.toLowerCase()
-.split(",")
-.map(d=>d.trim());
-
+let blocked=blockedDays.value.toLowerCase().split(",").map(d=>d.trim());
 let start=parseInt(startHour.value);
 let end=parseInt(endHour.value);
 
@@ -139,29 +116,19 @@ schedule[d]={};
 hours.forEach(h=>schedule[d][h]=null);
 });
 
-let availableDays = weekDays.filter(d=>!blocked.includes(d.toLowerCase()));
-
+let availableDays=weekDays.filter(d=>!blocked.includes(d.toLowerCase()));
 let dayIndex=0;
 
 tasks.filter(t=>!t.completed).forEach(task=>{
 if(availableDays.length===0) return;
-
-let placed=false;
-
-while(!placed){
-let day=availableDays[dayIndex % availableDays.length];
-
+let day=availableDays[dayIndex%availableDays.length];
 for(let h of hours){
 if(!schedule[day][h]){
 schedule[day][h]={title:task.title};
-placed=true;
 break;
 }
 }
-
 dayIndex++;
-if(dayIndex>50) break;
-}
 });
 
 saveAll();
@@ -175,7 +142,6 @@ let table=document.createElement("table");
 
 let header=document.createElement("tr");
 header.appendChild(document.createElement("th"));
-
 weekDays.forEach(d=>{
 let th=document.createElement("th");
 th.textContent=d;
@@ -185,7 +151,6 @@ table.appendChild(header);
 
 hours.forEach(hour=>{
 let row=document.createElement("tr");
-
 let hCell=document.createElement("td");
 hCell.textContent=hour;
 row.appendChild(hCell);
@@ -193,38 +158,16 @@ row.appendChild(hCell);
 weekDays.forEach(day=>{
 let cell=document.createElement("td");
 
-cell.ondragover=e=>e.preventDefault();
-
-cell.ondrop=e=>{
-e.preventDefault();
-let data=JSON.parse(e.dataTransfer.getData("text"));
-schedule[data.day][data.hour]=null;
-schedule[day][hour]={title:data.title};
-saveAll();
-renderCalendar(hours);
-};
-
 let task=schedule[day][hour];
 if(task){
 let div=document.createElement("div");
 div.className="task-block";
 div.textContent=task.title;
-div.draggable=true;
-
-div.ondragstart=e=>{
-e.dataTransfer.setData("text",JSON.stringify({
-title:task.title,
-day:day,
-hour:hour
-}));
-};
-
 cell.appendChild(div);
 }
 
 row.appendChild(cell);
 });
-
 table.appendChild(row);
 });
 
@@ -309,6 +252,7 @@ let file=e.target.files[0];
 let reader=new FileReader();
 reader.onload=function(){
 editor.innerHTML+="<img src='"+reader.result+"' width='200'><br>";
+saveAll();
 };
 reader.readAsDataURL(file);
 });
