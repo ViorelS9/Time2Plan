@@ -2,127 +2,152 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Time2Plan</title>
-<link rel="stylesheet" href="style.css">
+
+<style>
+body{
+  font-family: 'Comic Sans MS', cursive;
+  margin:0;
+  padding:0;
+  background:#f4f6fb;
+  text-align:center;
+}
+
+.page{
+  display:none;
+  padding:20px;
+}
+
+.active{
+  display:block;
+}
+
+button{
+  padding:8px 14px;
+  margin:5px;
+  border:none;
+  border-radius:8px;
+  background:#6c8cff;
+  color:white;
+  cursor:pointer;
+}
+
+button:hover{
+  background:#4f6de6;
+}
+
+input, select, textarea{
+  padding:6px;
+  margin:4px;
+  border-radius:6px;
+}
+
+.task-item{
+  background:white;
+  margin:10px auto;
+  padding:10px;
+  width:70%;
+  border-radius:10px;
+}
+
+.completed{
+  text-decoration:line-through;
+  opacity:0.6;
+}
+
+table{
+  margin:auto;
+  border-collapse:collapse;
+}
+
+td, th{
+  border:1px solid #ccc;
+  width:120px;
+  height:60px;
+  position:relative;
+}
+
+.task-block{
+  background:#8fd3a6;
+  padding:5px;
+  border-radius:6px;
+  cursor:move;
+  font-size:12px;
+}
+</style>
 </head>
 
 <body>
 
-<header>
-  <h1 onclick="goHome()">Time2Plan</h1>
-</header>
-
 <!-- HOME -->
 <div id="home" class="page active">
-  <div class="grid-home">
-    <div class="card" onclick="openPage('tasks')">
-      <h2>TAREAS</h2>
-    </div>
-
-    <div class="card" onclick="openPage('schedule')">
-      <h2>HORARIO</h2>
-    </div>
-
-    <div class="card" onclick="openPage('notes')">
-      <h2>NOTAS</h2>
-    </div>
-
-    <div class="card" onclick="openPage('notifications')">
-      <h2>NOTIFICACIONES</h2>
-    </div>
-  </div>
+  <h1>Time2Plan</h1>
+  <button onclick="openPage('tasksPage')">TAREAS</button>
+  <button onclick="openPage('schedulePage')">HORARIO</button>
+  <button onclick="openPage('notesPage')">NOTAS</button>
+  <button onclick="openPage('notificationsPage')">NOTIFICACIONES</button>
 </div>
 
 <!-- TAREAS -->
-<div id="tasks" class="page">
-  <button class="back" onclick="goHome()">← Volver</button>
+<div id="tasksPage" class="page">
+  <h2>Tareas</h2>
+  <button onclick="goHome()">Volver</button>
 
-  <div class="form-card">
-    <label>Título</label>
-    <input id="tTitle">
+  <h3>Agregar Tarea</h3>
 
-    <label>Descripción</label>
-    <textarea id="tDesc"></textarea>
+  <input id="tTitle" placeholder="Título"><br>
+  <textarea id="tDesc" placeholder="Descripción"></textarea><br>
+  <input type="date" id="tDate"><br>
 
-    <label>Fecha límite</label>
-    <input type="date" id="tDate">
+  <input type="number" id="tDays" placeholder="Días necesarios"><br>
+  <input type="number" id="tHours" placeholder="Horas por día"><br>
 
-    <label>Días necesarios</label>
-    <input type="number" id="tDays">
+  <select id="tType">
+    <option>Escolar</option>
+    <option>Personal</option>
+  </select><br>
 
-    <label>Horas por día</label>
-    <input type="number" id="tHours">
+  <select id="tDifficulty">
+    <option>Baja</option>
+    <option>Media</option>
+    <option>Alta</option>
+  </select><br>
 
-    <label>Tipo</label>
-    <select id="tType">
-      <option>Escolar</option>
-      <option>Personal</option>
-    </select>
+  <button onclick="addTask()">AGREGAR</button>
 
-    <label>Dificultad</label>
-    <select id="tDifficulty">
-      <option>Alta</option>
-      <option>Media</option>
-      <option>Baja</option>
-    </select>
-
-    <button onclick="addTask()">Agregar</button>
-  </div>
-
-  <ul id="taskList"></ul>
+  <div id="taskList"></div>
 </div>
 
 <!-- HORARIO -->
-<div id="schedule" class="page">
-  <button class="back" onclick="goHome()">← Volver</button>
+<div id="schedulePage" class="page">
+  <h2>Horario</h2>
+  <button onclick="goHome()">Volver</button>
 
-  <div class="form-card">
-    <label>Días ocupados</label>
-    <input id="blockedDays">
+  <h3>Configuración</h3>
 
-    <label>Hora inicio</label>
-    <input type="number" id="startHour">
+  <input id="blockedDays" placeholder="Días ocupados (lunes,martes)"><br>
+  <input type="number" id="startHour" placeholder="Hora inicio (ej: 13)"><br>
+  <input type="number" id="endHour" placeholder="Hora fin (ej: 18)"><br>
 
-    <label>Hora fin</label>
-    <input type="number" id="endHour">
-
-    <button onclick="generateSchedule()">Generar Horario</button>
-  </div>
+  <button onclick="generateSchedule()">GENERAR HORARIO</button>
 
   <div id="calendar"></div>
 </div>
 
 <!-- NOTAS -->
-<div id="notes" class="page">
-  <button class="back" onclick="goHome()">← Volver</button>
-
-  <button onclick="createNote()">Crear Nota</button>
-
-  <div id="notesList"></div>
-
-  <div id="noteEditor" style="display:none;">
-    <h3 id="noteTitle"></h3>
-
-    <button onclick="addPage()">Agregar Página</button>
-    <button onclick="addImage()">Agregar Imagen</button>
-    <button onclick="deleteNote()">Eliminar Nota</button>
-
-    <div id="pages"></div>
-
-    <div id="editor" contenteditable="true"></div>
-
-    <input type="file" id="imgInput" style="display:none;">
-  </div>
+<div id="notesPage" class="page">
+  <h2>Notas</h2>
+  <button onclick="goHome()">Volver</button>
+  <p>Sección básica de notas (usa tu sistema actual JS).</p>
 </div>
 
 <!-- NOTIFICACIONES -->
-<div id="notifications" class="page">
-  <button class="back" onclick="goHome()">← Volver</button>
+<div id="notificationsPage" class="page">
+  <h2>Notificaciones</h2>
+  <button onclick="goHome()">Volver</button>
   <div id="notificationsBox"></div>
 </div>
 
 <script src="script.js"></script>
-
 </body>
 </html>
