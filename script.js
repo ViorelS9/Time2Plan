@@ -199,8 +199,8 @@ function renderSchedule(){
   let blockedDays = document.getElementById("blockedDays").value
     .toLowerCase().split(",").map(d=>d.trim());
 
-  let startHour = parseInt(startHour?.value) || 8;
-  let endHour = parseInt(endHour?.value) || 18;
+  let startHour = parseInt(document.getElementById("startHour").value) || 8;
+  let endHour = parseInt(document.getElementById("endHour").value) || 18;
 
   let table = document.createElement("table");
 
@@ -234,6 +234,30 @@ function renderSchedule(){
           renderSchedule();
         }
       };
+
+      schedule.forEach(item=>{
+        if(item.day===day && item.start===h){
+          let block = document.createElement("div");
+          block.className="task-block";
+          block.textContent=item.title;
+          block.draggable=true;
+
+          block.ondragstart = e=>{
+            e.dataTransfer.setData("id", item.id);
+          };
+
+          cell.appendChild(block);
+        }
+      });
+
+      row.appendChild(cell);
+    });
+
+    table.appendChild(row);
+  }
+
+  calendar.appendChild(table);
+}
 
       schedule.forEach(item=>{
         if(item.day===day && item.start===h){
