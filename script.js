@@ -1,5 +1,5 @@
 /* ===========================
-   VARIABLES
+   VARIABLES GLOBALES
 =========================== */
 
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
@@ -65,10 +65,7 @@ function calculatePriority(task){
 
 function addTask(){
 
-  if(!tTitle.value || !tDate.value){
-    alert("Completa título y fecha");
-    return;
-  }
+  if(!tTitle.value || !tDate.value) return;
 
   let t = {
     id: Date.now(),
@@ -84,18 +81,8 @@ function addTask(){
   };
 
   tasks.push(t);
-
-  // LIMPIAR FORM
-  tTitle.value = "";
-  tDesc.value = "";
-  tDate.value = "";
-  tDays.value = "";
-  tHours.value = "";
-
   saveAll();
   renderTasks();
-
-  alert("Tarea agregada");
 }
 
 function renderTasks(){
@@ -110,8 +97,8 @@ function renderTasks(){
     div.innerHTML = `
       <strong>${t.title}</strong> - ${t.date}
       <br>
-      <button onclick="toggleTask(${t.id}); event.stopPropagation()">✔</button>
-      <button onclick="deleteTask(${t.id}); event.stopPropagation()">✖</button>
+      <button onclick="toggleTask(${t.id}); event.stopPropagation()">Completar</button>
+      <button onclick="deleteTask(${t.id}); event.stopPropagation()">Eliminar</button>
     `;
 
     div.onclick = ()=>{
@@ -136,11 +123,9 @@ function toggleTask(id){
 }
 
 function deleteTask(id){
-  if(confirm("Eliminar tarea?")){
-    tasks = tasks.filter(t=>t.id!==id);
-    saveAll();
-    renderTasks();
-  }
+  tasks = tasks.filter(t=>t.id!==id);
+  saveAll();
+  renderTasks();
 }
 
 /* ===========================
@@ -152,8 +137,10 @@ function generateSchedule(){
   schedule = [];
 
   let blockedInput = document.getElementById("blockedDays").value.toLowerCase();
-  let startHour = parseInt(document.getElementById("startHour").value) || 8;
-  let endHour = parseInt(document.getElementById("endHour").value) || 18;
+  let startHour = parseInt(document.getElementById("startHour").value);
+  let endHour = parseInt(document.getElementById("endHour").value);
+
+  if(isNaN(startHour) || isNaN(endHour)) return;
 
   let blockedDays = blockedInput.split(",").map(d=>d.trim());
 
@@ -171,7 +158,8 @@ function generateSchedule(){
 
       if(blockedDays.includes(day)) continue;
 
-      if((endHour - startHour) < task.hours) continue;
+      let available = endHour - startHour;
+      if(available < task.hours) continue;
 
       schedule.push({
         id: Date.now() + Math.random(),
@@ -187,8 +175,6 @@ function generateSchedule(){
 
   saveAll();
   renderSchedule();
-
-  alert("Horario generado");
 }
 
 function renderSchedule(){
@@ -196,17 +182,19 @@ function renderSchedule(){
   let calendar = document.getElementById("calendar");
   calendar.innerHTML = "";
 
-  let blockedDays = document.getElementById("blockedDays").value
-    .toLowerCase().split(",").map(d=>d.trim());
+  let blockedInput = document.getElementById("blockedDays").value.toLowerCase();
+  let blockedDays = blockedInput.split(",").map(d=>d.trim());
 
-  let startHour = parseInt(startHour?.value) || 8;
-  let endHour = parseInt(endHour?.value) || 18;
+  let startHour = parseInt(document.getElementById("startHour").value) || 8;
+  let endHour = parseInt(document.getElementById("endHour").value) || 18;
 
   let table = document.createElement("table");
 
   let header = document.createElement("tr");
   header.innerHTML = "<th>Hora</th>";
-  weekDays.forEach(day=> header.innerHTML += `<th>${day}</th>`);
+  weekDays.forEach(day=>{
+    header.innerHTML += `<th>${day}</th>`;
+  });
   table.appendChild(header);
 
   for(let h=startHour; h<endHour; h++){
@@ -260,14 +248,16 @@ function renderSchedule(){
 }
 
 /* ===========================
-   NOTAS
+   NOTAS (ARREGLADO)
 =========================== */
 
 function createNote(){
   let name = prompt("Nombre de la nota:");
   if(!name) return;
 
-  notes[name] = { pages:[""] };
+  notes[name] = {
+    pages: [""]
+  };
 
   saveAll();
   renderNotes();
@@ -281,7 +271,9 @@ function renderNotes(){
     let div = document.createElement("div");
     div.className = "note-card";
     div.textContent = n;
+
     div.onclick = ()=>openNote(n);
+
     container.appendChild(div);
   });
 }
@@ -291,65 +283,75 @@ function openNote(name){
   currentPage = 0;
 
   document.getElementById("noteEditor").style.display = "block";
-  noteTitle.textContent = name;
+  document.getElementById("noteTitle").textContent = name;
 
   renderPages();
   loadPage();
 }
 
 function deleteNote(){
-  if(confirm("Eliminar nota?")){
-    delete notes[currentNote];
-    currentNote = null;
-    saveAll();
-    document.getElementById("noteEditor").style.display="none";
-    renderNotes();
-  }
+  delete notes[currentNote];
+  currentNote = null;
+
+  saveAll();
+  document.getElementById("noteEditor").style.display="none";
+  renderNotes();
 }
 
 function renderPages(){
-  let p = document.getElementById("pages");
-  p.innerHTML = "";
+  let container = document.getElementById("pages");
+  container.innerHTML = "";
 
   notes[currentNote].pages.forEach((_,i)=>{
     let btn = document.createElement("button");
     btn.textContent = "Página " + (i+1);
-    btn.onclick = ()=>{currentPage=i; loadPage();}
-    p.appendChild(btn);
+
+    btn.onclick = ()=>{
+      currentPage = i;
+      loadPage();
+    };
+
+    container.appendChild(btn);
   });
 }
 
 function loadPage(){
-  editor.innerHTML = notes[currentNote].pages[currentPage];
+  document.getElementById("editor").innerHTML =
+    notes[currentNote].pages[currentPage];
 }
 
-editor.addEventListener("input",()=>{
+document.getElementById("editor").addEventListener("input",()=>{
   if(currentNote){
-    notes[currentNote].pages[currentPage] = editor.innerHTML;
+    notes[currentNote].pages[currentPage] =
+      document.getElementById("editor").innerHTML;
     saveAll();
   }
 });
 
 function addPage(){
   notes[currentNote].pages.push("");
-  currentPage = notes[currentNote].pages.length-1;
+  currentPage = notes[currentNote].pages.length - 1;
+
   saveAll();
   renderPages();
   loadPage();
 }
 
 function addImage(){
-  imgInput.click();
+  document.getElementById("imgInput").click();
 }
 
-imgInput.addEventListener("change",function(e){
+document.getElementById("imgInput").addEventListener("change",function(e){
   let file = e.target.files[0];
   if(!file) return;
 
   let reader = new FileReader();
+
   reader.onload = function(){
-    editor.innerHTML += `<img src="${reader.result}" width="200"><br>`;
+    document.getElementById("editor").innerHTML +=
+      `<img src="${reader.result}" width="200"><br>`;
   };
+
   reader.readAsDataURL(file);
 });
 
@@ -374,6 +376,6 @@ function renderNotifications(){
 =========================== */
 
 renderTasks();
-renderNotes();
+renderNotes();   // ← IMPORTANTE (esto faltaba bien conectado)
 renderSchedule();
 renderNotifications();
