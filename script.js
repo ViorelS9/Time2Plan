@@ -27,12 +27,12 @@ function saveAll(){
 
 function openPage(id){
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
+  document.getElementById(id)?.classList.add("active");
 }
 
 function goHome(){
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
-  document.getElementById("home").classList.add("active");
+  document.getElementById("home")?.classList.add("active");
 }
 
 /* ===========================
@@ -64,13 +64,16 @@ function calculatePriority(task){
 =========================== */
 
 function addTask(){
+
+  if(!tTitle.value || !tDate.value) return;
+
   let t = {
     id: Date.now(),
     title: tTitle.value,
     desc: tDesc.value,
     date: tDate.value,
-    days: parseInt(tDays.value)||0,
-    hours: parseInt(tHours.value)||0,
+    days: parseInt(tDays.value)||1,
+    hours: parseInt(tHours.value)||1,
     type: tType.value,
     difficulty: tDifficulty.value,
     completed:false,
@@ -94,8 +97,8 @@ function renderTasks(){
     div.innerHTML = `
       <strong>${t.title}</strong> - ${t.date}
       <br>
-      <button onclick="toggleTask(${t.id})">Completar</button>
-      <button onclick="deleteTask(${t.id})">Eliminar</button>
+      <button onclick="toggleTask(${t.id}); event.stopPropagation()">Completar</button>
+      <button onclick="deleteTask(${t.id}); event.stopPropagation()">Eliminar</button>
     `;
 
     div.onclick = ()=>{
@@ -105,7 +108,7 @@ function renderTasks(){
 
     if(t.show){
       let p = document.createElement("p");
-      p.textContent = t.desc;
+      p.textContent = t.desc || "Sin descripción";
       div.appendChild(p);
     }
 
@@ -126,7 +129,7 @@ function deleteTask(id){
 }
 
 /* ===========================
-   GENERAR HORARIO INTELIGENTE
+   HORARIO
 =========================== */
 
 function generateSchedule(){
@@ -160,7 +163,6 @@ function generateSchedule(){
 
       schedule.push({
         id: Date.now() + Math.random(),
-        taskId: task.id,
         title: task.title,
         day: day,
         start: startHour,
@@ -175,10 +177,6 @@ function generateSchedule(){
   renderSchedule();
 }
 
-/* ===========================
-   RENDER HORARIO
-=========================== */
-
 function renderSchedule(){
 
   let calendar = document.getElementById("calendar");
@@ -187,8 +185,8 @@ function renderSchedule(){
   let blockedInput = document.getElementById("blockedDays").value.toLowerCase();
   let blockedDays = blockedInput.split(",").map(d=>d.trim());
 
-  let startHour = parseInt(document.getElementById("startHour").value);
-  let endHour = parseInt(document.getElementById("endHour").value);
+  let startHour = parseInt(document.getElementById("startHour").value) || 8;
+  let endHour = parseInt(document.getElementById("endHour").value) || 18;
 
   let table = document.createElement("table");
 
@@ -208,7 +206,7 @@ function renderSchedule(){
       let cell = document.createElement("td");
 
       if(blockedDays.includes(day)){
-        cell.style.background = "#ffe0e0"; // rojo suave día ocupado
+        cell.style.background = "#ffe0e0";
       }
 
       cell.ondragover = e=>e.preventDefault();
@@ -220,7 +218,6 @@ function renderSchedule(){
         if(item && !blockedDays.includes(day)){
           item.day = day;
           item.start = h;
-          item.end = h + (item.end - item.start);
           saveAll();
           renderSchedule();
         }
@@ -251,6 +248,114 @@ function renderSchedule(){
 }
 
 /* ===========================
+   NOTAS (ARREGLADO)
+=========================== */
+
+function createNote(){
+  let name = prompt("Nombre de la nota:");
+  if(!name) return;
+
+  notes[name] = {
+    pages: [""]
+  };
+
+  saveAll();
+  renderNotes();
+}
+
+function renderNotes(){
+  let container = document.getElementById("notesList");
+  container.innerHTML = "";
+
+  Object.keys(notes).forEach(n=>{
+    let div = document.createElement("div");
+    div.className = "note-card";
+    div.textContent = n;
+
+    div.onclick = ()=>openNote(n);
+
+    container.appendChild(div);
+  });
+}
+
+function openNote(name){
+  currentNote = name;
+  currentPage = 0;
+
+  document.getElementById("noteEditor").style.display = "block";
+  document.getElementById("noteTitle").textContent = name;
+
+  renderPages();
+  loadPage();
+}
+
+function deleteNote(){
+  delete notes[currentNote];
+  currentNote = null;
+
+  saveAll();
+  document.getElementById("noteEditor").style.display="none";
+  renderNotes();
+}
+
+function renderPages(){
+  let container = document.getElementById("pages");
+  container.innerHTML = "";
+
+  notes[currentNote].pages.forEach((_,i)=>{
+    let btn = document.createElement("button");
+    btn.textContent = "Página " + (i+1);
+
+    btn.onclick = ()=>{
+      currentPage = i;
+      loadPage();
+    };
+
+    container.appendChild(btn);
+  });
+}
+
+function loadPage(){
+  document.getElementById("editor").innerHTML =
+    notes[currentNote].pages[currentPage];
+}
+
+document.getElementById("editor").addEventListener("input",()=>{
+  if(currentNote){
+    notes[currentNote].pages[currentPage] =
+      document.getElementById("editor").innerHTML;
+    saveAll();
+  }
+});
+
+function addPage(){
+  notes[currentNote].pages.push("");
+  currentPage = notes[currentNote].pages.length - 1;
+
+  saveAll();
+  renderPages();
+  loadPage();
+}
+
+function addImage(){
+  document.getElementById("imgInput").click();
+}
+
+document.getElementById("imgInput").addEventListener("change",function(e){
+  let file = e.target.files[0];
+  if(!file) return;
+
+  let reader = new FileReader();
+
+  reader.onload = function(){
+    document.getElementById("editor").innerHTML +=
+      `<img src="${reader.result}" width="200"><br>`;
+  };
+
+  reader.readAsDataURL(file);
+});
+
+/* ===========================
    NOTIFICACIONES
 =========================== */
 
@@ -271,5 +376,6 @@ function renderNotifications(){
 =========================== */
 
 renderTasks();
+renderNotes();   // ← IMPORTANTE (esto faltaba bien conectado)
 renderSchedule();
 renderNotifications();
