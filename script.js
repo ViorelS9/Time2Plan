@@ -137,37 +137,55 @@ function generateSchedule(){
   schedule = [];
 
   let blockedInput = document.getElementById("blockedDays").value.toLowerCase();
-  let startHour = parseInt(document.getElementById("startHour").value);
-  let endHour = parseInt(document.getElementById("endHour").value);
-
-  if(isNaN(startHour) || isNaN(endHour)) return;
+  let startHour = parseInt(document.getElementById("startHour").value) || 8;
+  let endHour = parseInt(document.getElementById("endHour").value) || 18;
 
   let blockedDays = blockedInput.split(",").map(d=>d.trim());
 
+  // ORDENAR POR PRIORIDAD
   let orderedTasks = tasks
     .filter(t=>!t.completed)
     .sort((a,b)=> calculatePriority(b) - calculatePriority(a));
+
+  // DÍA ACTUAL (evitar días pasados)
+  let todayIndex = new Date().getDay(); 
+  // JS: 0 domingo → ajustamos
+  todayIndex = (todayIndex === 0) ? 6 : todayIndex - 1;
+
+  let validDays = weekDays.slice(todayIndex);
+
+  // CONTROL DE HORAS POR DÍA
+  let dayHourMap = {};
+  validDays.forEach(day=>{
+    dayHourMap[day] = startHour;
+  });
 
   orderedTasks.forEach(task=>{
 
     let daysLeft = task.days;
 
-    for(let d=0; d<weekDays.length && daysLeft>0; d++){
+    for(let d=0; d<validDays.length && daysLeft>0; d++){
 
-      let day = weekDays[d];
+      let day = validDays[d];
 
       if(blockedDays.includes(day)) continue;
 
-      let available = endHour - startHour;
-      if(available < task.hours) continue;
+      let currentHour = dayHourMap[day];
 
+      // SI YA NO CABE EN EL DÍA → saltar
+      if(currentHour + task.hours > endHour) continue;
+
+      //  ASIGNAR BLOQUE CORRECTO
       schedule.push({
         id: Date.now() + Math.random(),
         title: task.title,
         day: day,
-        start: startHour,
-        end: startHour + task.hours
+        start: currentHour,
+        end: currentHour + task.hours
       });
+
+      //  AVANZAR HORA EN ESE DÍA
+      dayHourMap[day] += task.hours;
 
       daysLeft--;
     }
@@ -175,8 +193,9 @@ function generateSchedule(){
 
   saveAll();
   renderSchedule();
-}
 
+  alert("Horario generado correctamente");
+}
 function renderSchedule(){
 
   let calendar = document.getElementById("calendar");
